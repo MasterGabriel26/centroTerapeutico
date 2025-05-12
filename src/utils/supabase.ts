@@ -1,19 +1,26 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from "@supabase/supabase-js";
 
 // Los valores reales vendrán de las variables de entorno
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://your-supabase-url.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'your-anon-key';
+const supabaseUrl =
+  import.meta.env.VITE_SUPABASE_URL || "https://your-supabase-url.supabase.co";
+const supabaseAnonKey =
+  import.meta.env.VITE_SUPABASE_ANON_KEY || "your-anon-key";
 
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type Usuario = {
   id: string;
   email: string;
+  password?: string;
   nombre_completo: string;
-  tipo: 'admin' | 'medico' | 'familiar';
+  tipo: "admin" | "medico" | "familiar";
   telefono?: string;
   creado_por?: string;
   created_at: string;
+  imagen_perfil?: string | null;
+  imagenes_extra?: string[];
+  descripcion?: string | null;
+  paciente_id?: string | null;
 };
 
 export type Anexado = {
@@ -21,7 +28,7 @@ export type Anexado = {
   nombre_completo: string;
   fecha_ingreso: string;
   fecha_salida?: string;
-  estado: 'activo' | 'inactivo';
+  estado: "activo" | "inactivo";
   motivo_anexo: string;
   familiar_id: string;
   created_at: string;
@@ -32,8 +39,9 @@ export type Anexado = {
 
 export type RegistroDiario = {
   id: string;
-  anexado_id: string;
+  paciente_id: string;
   fecha: string;
+  imagen_evidencia: string;
   descripcion: string;
   medicamentos: string;
   comidas: string;
@@ -46,15 +54,29 @@ export type RegistroDiario = {
   updated_by?: string;
 };
 
+export type Medicamento = {
+  id: string;
+  paciente_id: string;
+  nombre: string;
+  dosis: string;
+  frecuencia: string;
+  via: string;
+  observaciones?: string;
+  created_at: string;
+  created_by: string;
+  updated_at?: string;
+  updated_by?: string;
+};
+
 export type Pago = {
   id: string;
-  anexado_id: string;
+  paciente_id: string;
   familiar_id: string;
   fecha: string;
   monto: number;
-  metodo_pago: 'efectivo' | 'transferencia';
+  metodo_pago: "efectivo" | "transferencia";
   comprobante_url?: string;
-  estado: 'pendiente' | 'completado';
+  estado: "pendiente" | "completado";
   created_at: string;
   created_by: string;
   updated_at?: string;
@@ -77,7 +99,7 @@ export type Multimedia = {
   id: string;
   anexado_id: string;
   registro_id?: string;
-  tipo: 'foto' | 'video' | 'documento';
+  tipo: "foto" | "video" | "documento";
   url: string;
   descripcion?: string;
   fecha: string;

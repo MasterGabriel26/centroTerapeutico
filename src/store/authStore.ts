@@ -1,110 +1,123 @@
 import { create } from 'zustand';
-import { supabase, Usuario } from '../utils/supabase';
+import { signInWithEmailAndPassword, signOut, onAuthStateChanged, User, createUserWithEmailAndPassword } from 'firebase/auth';
+import { auth, db} from '../utils/firebase';
+import { Usuario } from '../utils/supabase';
+import { doc, setDoc, getDoc } from 'firebase/firestore';
 
 interface AuthState {
   usuario: Usuario | null;
   isLoading: boolean;
   error: string | null;
   login: (email: string, password: string) => Promise<void>;
+  register: (email: string, password: string, nombre: string, telefono: string) => Promise<void>;
   logout: () => Promise<void>;
   checkSession: () => Promise<void>;
 }
 
+
 export const useAuthStore = create<AuthState>((set) => ({
   usuario: null,
-  isLoading: true,
+  isLoading: false,
   error: null,
 
-  login: async (email: string, password: string) => {
+  login: async (email, password) => {
     set({ isLoading: true, error: null });
-  
-    const usuarioFalso: Usuario = {
-      id: 'demo-001',
-      email,
-      nombre_completo: 'Usuario Demo',
-      tipo: 'admin',
-      created_at: new Date().toISOString(),
-    };
-  
-    await new Promise((res) => setTimeout(res, 300));
-  
-    set({
-      usuario: usuarioFalso,
-      isLoading: false,
-      error: null,
-    });
-
-  },
-  
-  // login: async (email: string, password: string) => {
-  //   try {
-  //     set({ isLoading: true, error: null });
-      
-  //     const { data, error } = await supabase.auth.signInWithPassword({
-  //       email,
-  //       password,
-  //     });
-
-  //     if (error) throw error;
-
-  //     if (data.user) {
-  //       const { data: usuarioData, error: profileError } = await supabase
-  //         .from('usuarios')
-  //         .select('*')
-  //         .eq('id', data.user.id)
-  //         .single();
-
-  //       if (profileError) throw profileError;
-        
-  //       set({ usuario: usuarioData as Usuario, isLoading: false });
-  //     }
-  //   } catch (error) {
-  //     console.error('Error de inicio de sesión:', error);
-  //     set({ 
-  //       error: error instanceof Error ? error.message : 'Error al iniciar sesión', 
-  //       isLoading: false 
-  //     });
-  //   }
-  // },
-
-  logout: async () => {
     try {
-      set({ isLoading: true });
-      await supabase.auth.signOut();
-      set({ usuario: null, isLoading: false });
-    } catch (error) {
-      console.error('Error al cerrar sesión:', error);
-      set({ 
-        error: error instanceof Error ? error.message : 'Error al cerrar sesión', 
-        isLoading: false 
+      const credentials = await signInWithEmailAndPassword(auth, email, password);
+      const user: User = credentials.user;
+
+      // Obtener datos del usuario desde Firestore
+      const userDoc = await getDoc(doc(db, 'users', user.uid));
+
+      if (!userDoc.exists()) {
+        throw new Error('No se encontró perfil de usuario.');
+      }
+
+      const data = userDoc.data();
+
+      const usuario: Usuario = {
+        id: user.uid,
+        email: data.email,
+        nombre_completo: data.nombre_completo,
+        tipo: data.tipo,
+        created_at: data.created_at,
+      };
+
+      set({ usuario, isLoading: false });
+    } catch (err: any) {
+      console.error('Error de login:', err.message);
+      set({ error: 'Correo o contraseña incorrectos o sin perfil', isLoading: false });
+    }
+  },
+ 
+  logout: async () => {
+    set({ isLoading: true });
+    await signOut(auth);
+    set({ usuario: null, isLoading: false });
+  },
+
+  register: async (email, password, nombre, telefono) => {
+    set({ isLoading: true, error: null });
+    try {
+      const { user } = await createUserWithEmailAndPassword(auth, email, password);
+      // Creamos el perfil en Firestore
+      await setDoc(doc(db, 'users', user.uid), {
+        email,
+        password,
+        nombre_completo: nombre,
+        tipo: 'familiar',
+        telefono,      
+        created_at: new Date().toLocaleDateString('es-MX'),
+        imagen_perfil: null,
+        imagenes_extra: [],
+        descripcion: null,
+        paciente_id: null,
+        auth_uid: user.uid
       });
+      // Dejamos logueado al familiar (puedes cambiar si prefieres volver al admin)
+      set({
+        usuario: {
+          id: user.uid,
+          email,
+          password,
+          nombre_completo: nombre,
+          tipo: 'familiar',
+          telefono,
+          creado_por: 'admin',
+          created_at: new Date().toLocaleDateString('es-MX')
+        },
+        isLoading: false
+      });
+    } catch (err: any) {
+      set({ error: err.message, isLoading: false });
     }
   },
 
   checkSession: async () => {
-    try {
-      set({ isLoading: true });
-      
-      const { data } = await supabase.auth.getSession();
-      
-      if (data.session?.user) {
-        const { data: usuarioData } = await supabase
-          .from('usuarios')
-          .select('*')
-          .eq('id', data.session.user.id)
-          .single();
-        
-        set({ usuario: usuarioData as Usuario, isLoading: false });
+    set({ isLoading: true });
+
+    onAuthStateChanged(auth, async (user) => {
+      if (user) {
+        const userDoc = await getDoc(doc(db, 'users', user.uid));
+        if (!userDoc.exists()) {
+          set({ usuario: null, isLoading: false });
+          return;
+        }
+
+        const data = userDoc.data();
+
+        const usuario: Usuario = {
+          id: user.uid,
+          email: data.email,
+          nombre_completo: data.nombre_completo,
+          tipo: data.tipo,
+          created_at: data.created_at,
+        };
+
+        set({ usuario, isLoading: false });
       } else {
         set({ usuario: null, isLoading: false });
       }
-    } catch (error) {
-      console.error('Error al verificar sesión:', error);
-      set({ 
-        usuario: null, 
-        error: error instanceof Error ? error.message : 'Error al verificar sesión',
-        isLoading: false 
-      });
-    }
+    });
   },
 }));

@@ -1,124 +1,142 @@
-import React, { useState } from 'react';
-import { 
-  CreditCard, 
-  Download, 
-  Search, 
-  Filter, 
-  Calendar, 
-  ChevronDown, 
-  FileText, 
-  Check, 
-  X, 
-  Plus 
-} from 'lucide-react';
-import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
-import { Card } from '../components/ui/Card';
-
-// Datos simulados
-const pagosMock = [
-  {
-    id: '1',
-    anexado_id: '1',
-    anexado_nombre: 'Juan Pérez López',
-    familiar_nombre: 'María Pérez',
-    fecha: '2023-10-05',
-    monto: 3600,
-    metodo_pago: 'transferencia',
-    comprobante_url: 'https://example.com/comprobante1.jpg',
-    estado: 'completado',
-  },
-  {
-    id: '2',
-    anexado_id: '2',
-    anexado_nombre: 'Roberto González Martínez',
-    familiar_nombre: 'Ana González',
-    fecha: '2023-10-03',
-    monto: 3600,
-    metodo_pago: 'efectivo',
-    comprobante_url: null,
-    estado: 'completado',
-  },
-  {
-    id: '3',
-    anexado_id: '3',
-    anexado_nombre: 'Carlos Ramírez Silva',
-    familiar_nombre: 'Luis Ramírez',
-    fecha: '2023-10-01',
-    monto: 3600,
-    metodo_pago: 'transferencia',
-    comprobante_url: 'https://example.com/comprobante3.jpg',
-    estado: 'completado',
-  },
-  {
-    id: '4',
-    anexado_id: '1',
-    anexado_nombre: 'Juan Pérez López',
-    familiar_nombre: 'María Pérez',
-    fecha: '2023-09-28',
-    monto: 3600,
-    metodo_pago: 'transferencia',
-    comprobante_url: 'https://example.com/comprobante4.jpg',
-    estado: 'completado',
-  },
-  {
-    id: '5',
-    anexado_id: '4',
-    anexado_nombre: 'Miguel Hernández Torres',
-    familiar_nombre: 'Rosa Hernández',
-    fecha: '2023-10-10',
-    monto: 3600,
-    metodo_pago: 'transferencia',
-    comprobante_url: null,
-    estado: 'pendiente',
-  },
-];
-
-const pagosPendientesMock = [
-  {
-    id: '1',
-    anexado_id: '4',
-    anexado_nombre: 'Miguel Hernández Torres',
-    familiar_nombre: 'Rosa Hernández',
-    fecha_vencimiento: '2023-10-10',
-    monto: 3600,
-  },
-  {
-    id: '2',
-    anexado_id: '2',
-    anexado_nombre: 'Roberto González Martínez',
-    familiar_nombre: 'Ana González',
-    fecha_vencimiento: '2023-10-12',
-    monto: 3600,
-  },
-];
+import React, { useEffect, useState } from "react";
+import {
+  CreditCard,
+  Search,
+  Filter,
+  Calendar,
+  Check,
+  Plus,
+} from "lucide-react";
+import { Button } from "../components/ui/Button";
+import { Input } from "../components/ui/Input";
+import { Card } from "../components/ui/Card";
+import { Dialog } from "@mui/material";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "../utils/firebase";
 
 const Pagos = () => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [filterEstado, setFilterEstado] = useState<'todos' | 'completado' | 'pendiente'>('todos');
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
+  const [pagos, setPagos] = useState<any[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterEstado, setFilterEstado] = useState<
+    "todos" | "completado" | "pendiente"
+  >("todos");
+  const [startDate, setStartDate] = useState("");
+  const [endDate, setEndDate] = useState("");
   const [showFilters, setShowFilters] = useState(false);
-  
+  const [zoomImageUrl, setZoomImageUrl] = useState<string | null>(null);
+  const [historialPago, setHistorialPago] = useState<any[] | null>(null);
+  const [showHistorial, setShowHistorial] = useState(false);
+  const [usuarios, setUsuarios] = useState<{ [id: string]: string }>({});
+  // Debajo de los useState existentes
+  const [paginaActual, setPaginaActual] = useState(1);
+  const registrosPorPagina = 10;
+
+  const [pacientes, setPacientes] = useState<{ [key: string]: string }>({});
+  const [familiares, setFamiliares] = useState<{ [key: string]: string }>({});
   // Filtrar pagos según búsqueda, estado y fechas
-  const filteredPagos = pagosMock.filter(pago => {
-    const matchesSearch = pago.anexado_nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         pago.familiar_nombre.toLowerCase().includes(searchQuery.toLowerCase());
-    
-    const matchesEstado = filterEstado === 'todos' || pago.estado === filterEstado;
-    
+  const filteredPagos = pagos.filter((pago) => {
+    const matchesSearch =
+      pacientes[pago.paciente_id]
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      familiares[pago.familiar_id]
+        ?.toLowerCase()
+        .includes(searchQuery.toLowerCase());
+
+    const matchesEstado =
+      filterEstado === "todos" || pago.estado === filterEstado;
+
     const pagoDate = new Date(pago.fecha);
     const matchesStartDate = !startDate || pagoDate >= new Date(startDate);
     const matchesEndDate = !endDate || pagoDate <= new Date(endDate);
-    
+
     return matchesSearch && matchesEstado && matchesStartDate && matchesEndDate;
   });
+  // Calcular índices para paginación
+  const totalPaginas = Math.ceil(filteredPagos.length / registrosPorPagina);
+  const indexUltimo = paginaActual * registrosPorPagina;
+  const indexPrimero = indexUltimo - registrosPorPagina;
+  const pagosPaginados = filteredPagos.slice(indexPrimero, indexUltimo);
 
   // Calcular totales
   const totalPagos = filteredPagos.reduce((sum, pago) => sum + pago.monto, 0);
+
   const totalPagosCompletados = filteredPagos
-    .filter(pago => pago.estado === 'completado')
+    .filter((pago) => pago.estado === "completado")
     .reduce((sum, pago) => sum + pago.monto, 0);
+
+  const totalPagosPendientes = filteredPagos
+    .filter((pago) => pago.estado === "pendiente")
+    .reduce((sum, pago) => sum + pago.monto, 0);
+
+  const totalPendientesCount = filteredPagos.filter(
+    (p) => p.estado === "pendiente"
+  ).length;
+
+  useEffect(() => {
+    const fetchData = async () => {
+      const pagosSnap = await getDocs(collection(db, "pagos"));
+      const pacientesSnap = await getDocs(collection(db, "pacientes"));
+      const usersSnap = await getDocs(collection(db, "users"));
+
+      const pagosData = pagosSnap.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const usuariosMap: { [id: string]: string } = {};
+      const pacientesMap: { [id: string]: string } = {};
+      const familiaresMap: { [id: string]: string } = {};
+
+      usersSnap.forEach((doc) => {
+        const data = doc.data();
+        usuariosMap[doc.id] = data.nombre_completo;
+        familiaresMap[doc.id] = data.nombre_completo;
+      });
+
+      pacientesSnap.forEach((doc) => {
+        pacientesMap[doc.id] = doc.data().nombre_completo;
+      });
+
+      setPagos(pagosData);
+      setUsuarios(usuariosMap);
+      setPacientes(pacientesMap);
+      setFamiliares(familiaresMap);
+    };
+
+    fetchData();
+  }, []);
+
+
+  useEffect(() => {
+    const fetchNombres = async () => {
+      const pacSnap = await getDocs(collection(db, "pacientes"));
+      const famSnap = await getDocs(collection(db, "users"));
+
+      const pacMap: { [key: string]: string } = {};
+      pacSnap.forEach((doc) => {
+        pacMap[doc.id] = doc.data().nombre_completo;
+      });
+
+      const famMap: { [key: string]: string } = {};
+      famSnap.forEach((doc) => {
+        famMap[doc.id] = doc.data().nombre_completo;
+      });
+
+      setPacientes(pacMap);
+      setFamiliares(famMap);
+    };
+
+    fetchNombres();
+  }, []);
+
+  const handleVerHistorial = (pago: any) => {
+    const ordenado = [...(pago.historial || [])].sort(
+      (a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()
+    );
+    setHistorialPago(ordenado);
+    setShowHistorial(true);
+  };
 
   return (
     <div className="p-6">
@@ -127,60 +145,72 @@ const Pagos = () => {
           <h1 className="text-2xl font-bold text-gray-900">Pagos</h1>
           <p className="text-gray-500">Gestión de pagos de los pacientes</p>
         </div>
-        <Button 
-          variant="primary" 
-          icon={<Plus size={18} />}
-        >
+        {/* <Button variant="primary" icon={<Plus size={18} />}>
           Registrar Pago
-        </Button>
+        </Button> */}
       </div>
 
       {/* Tarjetas de resumen */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2">
+        <Card className="p-2">
           <div className="flex items-start">
             <div className="p-3 rounded-full bg-primary-50 text-primary-600 mr-4">
               <CreditCard size={24} />
             </div>
             <div>
               <p className="text-sm font-medium text-gray-500">Total Pagos</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">${totalPagos.toLocaleString('es-MX')}</h3>
-              <p className="text-xs text-gray-500 mt-1">{filteredPagos.length} registros</p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                ${totalPagos.toLocaleString("es-MX")}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {filteredPagos.length} registros
+              </p>
             </div>
           </div>
         </Card>
-        
-        <Card className="p-6">
+
+        <Card className="p-2">
           <div className="flex items-start">
             <div className="p-3 rounded-full bg-success-50 text-success-600 mr-4">
               <Check size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Pagos Completados</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">${totalPagosCompletados.toLocaleString('es-MX')}</h3>
+              <p className="text-sm font-medium text-gray-500">
+                Pagos Completados
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                ${totalPagosCompletados.toLocaleString("es-MX")}
+              </h3>
               <p className="text-xs text-gray-500 mt-1">
-                {filteredPagos.filter(p => p.estado === 'completado').length} registros
+                {filteredPagos.filter((p) => p.estado === "completado").length}{" "}
+                completados
               </p>
             </div>
           </div>
         </Card>
-        
-        <Card className="p-6">
+
+        <Card className="p-2">
           <div className="flex items-start">
             <div className="p-3 rounded-full bg-warning-50 text-warning-600 mr-4">
               <Calendar size={24} />
             </div>
             <div>
-              <p className="text-sm font-medium text-gray-500">Pagos Pendientes</p>
-              <h3 className="text-2xl font-bold text-gray-900 mt-1">${pagosPendientesMock.reduce((sum, p) => sum + p.monto, 0).toLocaleString('es-MX')}</h3>
-              <p className="text-xs text-gray-500 mt-1">{pagosPendientesMock.length} pendientes</p>
+              <p className="text-sm font-medium text-gray-500">
+                Pagos Pendientes
+              </p>
+              <h3 className="text-2xl font-bold text-gray-900 mt-1">
+                ${totalPagosPendientes.toLocaleString("es-MX")}
+              </h3>
+              <p className="text-xs text-gray-500 mt-1">
+                {totalPendientesCount} pendientes
+              </p>
             </div>
           </div>
         </Card>
       </div>
-      
+
       {/* Pagos pendientes */}
-      <div className="mb-8">
+      {/* <div className="mb-8">
         <h2 className="text-xl font-semibold mb-4">Pagos Pendientes</h2>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -224,10 +254,10 @@ const Pagos = () => {
             </div>
           )}
         </div>
-      </div>
+      </div> */}
 
       {/* Filtros y búsqueda */}
-      <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-2">
         <div className="flex flex-col md:flex-row gap-4 items-start">
           <div className="md:flex-1">
             <Input
@@ -237,32 +267,32 @@ const Pagos = () => {
               leftIcon={<Search size={18} />}
             />
           </div>
-          
+
           <div className="flex gap-2">
-            <Button 
-              variant={filterEstado === 'todos' ? 'primary' : 'outline'} 
+            <Button
+              variant={filterEstado === "todos" ? "primary" : "outline"}
               size="sm"
-              onClick={() => setFilterEstado('todos')}
+              onClick={() => setFilterEstado("todos")}
             >
               Todos
             </Button>
-            <Button 
-              variant={filterEstado === 'completado' ? 'primary' : 'outline'} 
+            <Button
+              variant={filterEstado === "completado" ? "primary" : "outline"}
               size="sm"
-              onClick={() => setFilterEstado('completado')}
+              onClick={() => setFilterEstado("completado")}
             >
               Completados
             </Button>
-            <Button 
-              variant={filterEstado === 'pendiente' ? 'primary' : 'outline'} 
+            <Button
+              variant={filterEstado === "pendiente" ? "primary" : "outline"}
               size="sm"
-              onClick={() => setFilterEstado('pendiente')}
+              onClick={() => setFilterEstado("pendiente")}
             >
               Pendientes
             </Button>
-            
-            <Button 
-              variant="outline" 
+
+            <Button
+              variant="outline"
               size="sm"
               icon={<Filter size={16} />}
               onClick={() => setShowFilters(!showFilters)}
@@ -271,7 +301,7 @@ const Pagos = () => {
             </Button>
           </div>
         </div>
-        
+
         {showFilters && (
           <div className="mt-4 pt-4 border-t border-gray-100 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
@@ -302,90 +332,169 @@ const Pagos = () => {
           <table className="min-w-full divide-y divide-gray-200">
             <thead className="bg-gray-50">
               <tr>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Anexado / Familiar
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Fecha
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Monto
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Método
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Estado
                 </th>
-                <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                <th
+                  scope="col"
+                  className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                >
                   Comprobante
                 </th>
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-gray-200">
-              {filteredPagos.map((pago) => (
-                <tr key={pago.id} className="hover:bg-gray-50">
+            <tbody>
+              {pagosPaginados.map((p) => (
+                <tr key={p.id} className="border-t">
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">{pago.anexado_nombre}</div>
-                    <div className="text-sm text-gray-500">{pago.familiar_nombre}</div>
+                    <div className="text-sm font-medium text-gray-900">
+                      {pacientes[p.paciente_id] || "Sin nombre"}
+                    </div>
+                    <div className="text-sm text-gray-500">
+                      {familiares[p.familiar_id] || "Familiar no asignado"}
+                    </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(pago.fecha).toLocaleDateString('es-MX')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    ${pago.monto.toLocaleString('es-MX')}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 capitalize">
-                    {pago.metodo_pago}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                      pago.estado === 'completado' 
-                        ? 'bg-green-100 text-green-800' 
-                        : 'bg-yellow-100 text-yellow-800'
-                    }`}>
-                      {pago.estado === 'completado' ? 'Completado' : 'Pendiente'}
+                  <td className="px-4 py-2">{p.fecha}</td>
+                  <td className="px-4 py-2">${p.monto}</td>
+                  <td className="px-4 py-2 capitalize">{p.metodo_pago}</td>
+                  <td className="px-4 py-2">
+                    <span
+                      className={`text-xs font-medium px-2 py-1 rounded-full ${
+                        p.estado === "completado"
+                          ? "bg-green-100 text-green-700"
+                          : p.estado === "borrado"
+                          ? "bg-red-100 text-red-700"
+                          : p.estado === "pendiente"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {p.estado}
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {pago.comprobante_url ? (
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        icon={<FileText size={14} />}
-                      >
-                        Ver comprobante
-                      </Button>
+                  <td className="px-4 py-2">
+                    {p.comprobante_url ? (
+                      <img
+                        src={p.comprobante_url}
+                        alt="Comprobante"
+                        className="h-12 w-12 object-cover rounded-md cursor-pointer hover:ring-2 hover:ring-primary-500"
+                        onClick={() => setZoomImageUrl(p.comprobante_url)}
+                      />
                     ) : (
-                      <span className="text-gray-400">No disponible</span>
+                      "-"
                     )}
+                  </td>
+                  <td className="px-4 py-2 flex gap-2">
+                    <Button onClick={() => handleVerHistorial(p)}>
+                      Historial
+                    </Button>
                   </td>
                 </tr>
               ))}
+              {filteredPagos.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="text-center py-4 text-gray-500 italic"
+                  >
+                    No se encontraron pagos
+                  </td>
+                </tr>
+              )}
             </tbody>
           </table>
         </div>
-        
+        <Dialog open={!!zoomImageUrl} onClose={() => setZoomImageUrl(null)}>
+          <div className="p-6 w-full max-w-md bg-white rounded shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Comprobante de Pago</h2>
+            {zoomImageUrl && (
+              <img
+                src={zoomImageUrl}
+                alt="Comprobante"
+                className="w-full max-h-[500px] object-contain rounded"
+              />
+            )}
+            <div className="flex justify-end mt-4">
+              <Button onClick={() => setZoomImageUrl(null)}>Cerrar</Button>
+            </div>
+          </div>
+        </Dialog>
+
         {filteredPagos.length === 0 && (
           <div className="py-8 text-center">
             <CreditCard size={48} className="mx-auto text-gray-300 mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No se encontraron pagos</h3>
-            <p className="text-gray-500">Ajusta los filtros para ver más resultados.</p>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">
+              No se encontraron pagos
+            </h3>
+            <p className="text-gray-500">
+              Ajusta los filtros para ver más resultados.
+            </p>
           </div>
         )}
-        
-        {filteredPagos.length > 0 && (
-          <div className="px-6 py-4 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
-            <p className="text-sm text-gray-500">
-              Mostrando {filteredPagos.length} de {pagosMock.length} registros
-            </p>
-            <Button 
-              variant="outline" 
-              size="sm"
-              icon={<Download size={16} />}
-            >
-              Exportar
-            </Button>
+        <Dialog open={showHistorial} onClose={() => setShowHistorial(false)}>
+          <div className="p-6 w-full max-w-md bg-white rounded shadow-lg">
+            <h2 className="text-lg font-semibold mb-4">Historial del Pago</h2>
+            {historialPago && historialPago.length > 0 ? (
+              <ul className="text-sm text-gray-700 space-y-2">
+                {historialPago.map((item, i) => (
+                  <li key={i} className="border-b pb-1">
+                    <strong>{item.tipo.toUpperCase()}</strong> – {item.fecha}{" "}
+                    por <code>{usuarios[item.usuario] || item.usuario}</code>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-sm text-gray-500 italic">
+                No hay historial registrado para este pago.
+              </p>
+            )}
+            <div className="flex justify-end mt-4">
+              <Button onClick={() => setShowHistorial(false)}>Cerrar</Button>
+            </div>
+          </div>
+        </Dialog>
+
+        {filteredPagos.length > registrosPorPagina && (
+          <div className="flex justify-center items-center py-4 gap-2">
+            {Array.from({ length: totalPaginas }, (_, i) => i + 1).map(
+              (num) => (
+                <Button
+                  key={num}
+                  size="sm"
+                  variant={paginaActual === num ? "primary" : "outline"}
+                  onClick={() => setPaginaActual(num)}
+                >
+                  {num}
+                </Button>
+              )
+            )}
           </div>
         )}
       </Card>

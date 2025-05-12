@@ -12,12 +12,15 @@ import LoginForm from './components/auth/LoginForm';
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
 import Pacientes from './pages/Pacientes';
-import RegistroDiario from './pages/RegistroDiario';
+import RegistroDiario from './pages/Gastos';
 import Pagos from './pages/Pagos';
 import FamiliarView from './pages/FamiliarView';
 
 // Logo para preloader
 import { Activity } from 'lucide-react';
+import Familiares from './pages/Familiares';
+import RegisterForm from './components/auth/RegisterForm';
+import Gastos from './pages/Gastos';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -41,9 +44,9 @@ const App: React.FC = () => {
         }
       } else {
         // Si el usuario no está autenticado y no está en login, redirigirlo a login
-        if (location.pathname !== '/login') {
+        if (location.pathname !== '/login' && location.pathname !== '/register') {
           navigate('/login');
-        }
+        }        
       }
     }
   }, [usuario, isLoading, location.pathname]);
@@ -66,6 +69,7 @@ const App: React.FC = () => {
       <Route path="/" element={<AuthLayout />}>
         <Route index element={<Navigate to="/login" replace />} />
         <Route path="login" element={<LoginForm />} />
+        <Route path="register" element={<RegisterForm />} /> 
       </Route>
 
       {/* Rutas protegidas */}
@@ -76,8 +80,9 @@ const App: React.FC = () => {
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="anexados" element={<Pacientes />} />
-        <Route path="registros" element={<RegistroDiario />} />
+        <Route path="pacientes" element={<Pacientes />} />
+        <Route path="familiares" element={<Familiares />} />
+        <Route path="gastos" element={<Gastos />} />
         <Route path="pagos" element={<Pagos />} />
         <Route path="mi-familiar" element={<FamiliarView />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />

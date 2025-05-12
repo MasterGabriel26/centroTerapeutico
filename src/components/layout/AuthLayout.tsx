@@ -60,7 +60,7 @@ const AuthLayout: React.FC = () => {
                 <p className="text-sm text-primary-100">Acceso seguro para que los familiares vean el progreso de su ser querido.</p>
               </div>
             </div>
-          </div>
+          </div> 
         </div>
       </div>
       

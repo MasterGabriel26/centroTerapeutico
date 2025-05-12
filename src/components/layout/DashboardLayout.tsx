@@ -11,6 +11,7 @@ import {
   X,
   LogOut,
   User,
+  PersonStandingIcon,
 } from 'lucide-react';
 import { useAuthStore } from '../../store/authStore';
 import { Button } from '../ui/Button';
@@ -70,8 +71,9 @@ const DashboardLayout: React.FC = () => {
           
           {(isAdmin || isMedico) && (
             <>
-              <NavItem to="/anexados" icon={<Users size={20} />} label="Pacientes" />
-              <NavItem to="/registros" icon={<ClipboardList size={20} />} label="Registros" />
+              <NavItem to="/pacientes" icon={<Users size={20} />} label="Pacientes" />
+              <NavItem to="/familiares" icon={<PersonStandingIcon size={20} />} label="Familiares" />
+              <NavItem to="/gastos" icon={<ClipboardList size={20} />} label="Gastos" />
             </>
           )}
 
@@ -83,9 +85,9 @@ const DashboardLayout: React.FC = () => {
             <NavItem to="/pagos" icon={<CreditCard size={20} />} label="Pagos" />
           )}
           
-          {isAdmin && (
+          {/* {isAdmin && (
             <NavItem to="/configuracion" icon={<Settings size={20} />} label="Configuración" />
-          )}
+          )} */}
         </nav>
         
         <div className="px-4 py-6 border-t border-gray-200">
@@ -131,7 +133,7 @@ const DashboardLayout: React.FC = () => {
         <div 
           className="absolute inset-0 bg-gray-900 bg-opacity-50" 
           onClick={() => setMobileMenuOpen(false)}
-        />
+        /> 
         
         <div className={`
           absolute top-0 left-0 bottom-0 w-64 bg-white transform transition-transform duration-300

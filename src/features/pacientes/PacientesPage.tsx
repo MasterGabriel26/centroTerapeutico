@@ -1,44 +1,63 @@
+// src/features/pacientes/PacientesPage.tsx
+
 import React, { useState, useEffect } from "react";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Dialog } from "../../components/ui/Dialog";
-// features/pacientes/PacientesPage.tsx
-import PacienteForm from "./components/PacienteForm"; // Correcto
+import PacienteForm from "./components/PacienteForm";
 
 import { db } from "../../utils/firebase";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import DataTable from "../../components/ui/DataTable";
 import PacienteDrawerView from "../../components/drawers/PacienteDrawer";
-import { Paciente } from "./types/paciente";
+import { Paciente } from "./types/paciente"; // Asegúrate de que este tipo de Paciente sea correcto
 import { Column } from "../../components/ui/DataTable";
-const Pacientes: React.FC = () => {
+
+const PacientesList: React.FC = () => {
     const [showNewDialog, setShowNewDialog] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(false);
     const [pacienteDrawer, setPacienteDrawer] = useState<Paciente | null>(null);
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [pacientes, setPacientes] = useState<Paciente[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
+    const [filterEstado, setFilterEstado] = useState<"todos" | "activo" | "inactivo">("todos");
 
     useEffect(() => {
         const fetchPacientes = async () => {
             setLoading(true);
-            const snapshot = await getDocs(collection(db, "pacientes"));
-            const data = snapshot.docs.map((doc) => ({
-                id: doc.id,
-                ...(doc.data() as Omit<Paciente, "id">),
-            })) as Paciente[];
-            setPacientes(data);
-            setLoading(false);
+            try { // Agrega un try-catch para manejar errores en la carga
+                const snapshot = await getDocs(collection(db, "pacientes"));
+                const data = snapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...(doc.data() as Omit<Paciente, "id">),
+                })) as Paciente[];
+                setPacientes(data);
+            } catch (error) {
+                console.error("Error al cargar pacientes:", error);
+                // Opcional: mostrar un mensaje de error al usuario
+            } finally {
+                setLoading(false);
+            }
         };
         fetchPacientes();
     }, []);
 
-    const filteredPacientes = pacientes.filter((p) =>
-        p.nombre.toLowerCase().includes(searchQuery.toLowerCase())
-    );
+    const filteredPacientes = pacientes.filter((p) => {
+        // **MODIFICACIÓN AQUÍ**
+        // Primero, verifica si p.nombre existe y es una cadena
+        const pacienteNombre = p.nombre_completo ? p.nombre_completo.toLowerCase() : ''; // Si p.nombre es null/undefined, usa una cadena vacía
+      console.log("Nombre del paciente en minúsculas:", pacienteNombre);
+        const searchLower = searchQuery;
 
-    // Solo los campos del modelo original
+        const matchesSearch = pacienteNombre.includes(searchLower);
+
+        // Lógica de filtrado por estado (similar a Familiares)
+        const matchesEstado = filterEstado === "todos" || p.estado === filterEstado;
+
+        return matchesSearch && matchesEstado;
+    });
+
     const handleCreatePaciente = async (data: Omit<Paciente, "id" | "creado" | "estado">) => {
         const creado = new Date().toISOString();
         const payload: Omit<Paciente, "id"> = {
@@ -51,24 +70,19 @@ const Pacientes: React.FC = () => {
         setPacientes((prev) => [...prev, { ...payload, id: docRef.id }]);
     };
 
-    // Tabla profesional usando solo los campos relevantes de tu modelo
     const columns: Column<Paciente>[] = [
         {
             header: "Nombre",
-            accessorKey: "nombre" as keyof Paciente, // 👈 Forzamos a keyof Paciente
+            accessorKey: "nombre_completo" as keyof Paciente,
         },
         {
-            header: "Documento",
-            accessorKey: "documento" as keyof Paciente,
+            header: "Ingreso",
+            accessorKey: "fecha_ingreso" as keyof Paciente,
         },
         {
-            header: "Teléfono",
-            accessorKey: "telefono" as keyof Paciente,
-        },
-        {
-            header: "Email",
-            accessorKey: "email" as keyof Paciente,
-        },
+            header: "Motivo",
+            accessorKey: "motivo_anexo" as keyof Paciente,
+        },        
         {
             header: "Estado",
             accessorKey: "estado" as keyof Paciente,
@@ -104,7 +118,6 @@ const Pacientes: React.FC = () => {
         },
     ];
 
-
     return (
         <div className="p-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -126,7 +139,19 @@ const Pacientes: React.FC = () => {
                     placeholder="Buscar por nombre..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
+                    leftIcon={<Search size={18} />}
                 />
+                <div className="flex gap-2">
+                    {["todos", "activo", "inactivo"].map((estado) => (
+                        <Button
+                            key={estado}
+                            variant={filterEstado === estado ? "primary" : "outline"}
+                            onClick={() => setFilterEstado(estado as any)}
+                        >
+                            {estado[0].toUpperCase() + estado.slice(1)}
+                        </Button>
+                    ))}
+                </div>
             </div>
 
             <Dialog
@@ -148,12 +173,12 @@ const Pacientes: React.FC = () => {
                 pacienteDrawer={pacienteDrawer}
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
-                onOpen={() => { }}         // función vacía temporal
-                familiares={[]}           // array vacío si no tienes aún
-                usuario={null}            // o tu objeto usuario real
+                onOpen={() => {}}
+                familiares={[]}
+                usuario={null}
             />
         </div>
     );
 };
 
-export default Pacientes;
+export default PacientesList;

@@ -1,7 +1,7 @@
 // features/pacientes/types/paciente.d.ts
 export interface Paciente {
   id?: string;
-  nombre: string;
+  nombre_completo: string;
   documento: string;
   fechaNacimiento: string;
   direccion: string;

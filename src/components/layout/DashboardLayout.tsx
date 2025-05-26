@@ -17,6 +17,7 @@ import { useAuthStore } from '../../store/authStore';
 import { Button } from '../ui/Button';
 import LOGO from "../../../public/logo_sin_fondo.png"
 
+
 const DashboardLayout: React.FC = () => {
   const { usuario, logout } = useAuthStore();
   const navigate = useNavigate();
@@ -74,6 +75,8 @@ const DashboardLayout: React.FC = () => {
               <NavItem to="/pacientes" icon={<Users size={20} />} label="Pacientes" />
               <NavItem to="/familiares" icon={<PersonStandingIcon size={20} />} label="Familiares" />
               <NavItem to="/gastos" icon={<ClipboardList size={20} />} label="Gastos" />
+                 <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
+                
             </>
           )}
 

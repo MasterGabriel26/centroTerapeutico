@@ -9,6 +9,7 @@ import {
   getDocs,
   query,
   where,
+  getDoc,
 } from "firebase/firestore";
 import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { db, storage } from "../../utils/firebase";
@@ -48,6 +49,19 @@ const RegistroDiarioSeguimiento: React.FC<Props> = ({
   const [historial, setHistorial] = useState<any[]>([]);
   const [showHistorial, setShowHistorial] = useState(false);
   const [zoomUrl, setZoomUrl] = useState<string | null>(null); // ← ESTA LÍNEA
+  const [fechaIngreso, setFechaIngreso] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchPaciente = async () => {
+      const docSnap = await getDoc(doc(db, "pacientes", pacienteId));
+      if (docSnap.exists()) {
+        const data = docSnap.data();
+        setFechaIngreso(data.fecha_ingreso);
+      }
+    };
+
+    fetchPaciente();
+  }, [pacienteId]);
 
   const fetchData = async () => {
     const q = query(
@@ -161,6 +175,33 @@ const RegistroDiarioSeguimiento: React.FC<Props> = ({
     </div>
   );
 
+  const formatFechaLocal = (fechaStr: string) => {
+    if (!fechaStr) return "Fecha inválida";
+    const [year, month, day] = fechaStr.split("-");
+    return new Date(+year, +month - 1, +day).toLocaleDateString("es-MX", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
+  const diasDesdeIngreso = (
+    fechaSeguimiento: string,
+    fechaIngresoStr: string | null
+  ): string => {
+    if (!fechaIngresoStr || !fechaSeguimiento) return "—";
+
+    const [iy, im, id] = fechaIngresoStr.split("-").map(Number);
+    const [sy, sm, sd] = fechaSeguimiento.split("-").map(Number);
+
+    const ingreso = new Date(iy, im - 1, id);
+    const seguimiento = new Date(sy, sm - 1, sd);
+
+    const diff = seguimiento.getTime() - ingreso.getTime();
+    return Math.floor(diff / (1000 * 60 * 60 * 24)).toString();
+  };
+
   return (
     <div className="space-y-6">
       <Button
@@ -204,21 +245,8 @@ const RegistroDiarioSeguimiento: React.FC<Props> = ({
                 <div className="p-4 space-y-4">
                   <div className="flex justify-between items-center">
                     <div className="flex items-center gap-2 text-gray-800 text-lg font-semibold">
-                      <CalendarDays className="w-5 h-5 text-primary-600" />
-                      {new Date(r.fecha).toLocaleDateString("es-MX", {
-                        weekday: "long",
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                      <p className="text-xs text-gray-500 flex items-center gap-1">
-                        <Clock3 className="w-5 h-5" />
-                        Día desde ingreso:{" "}
-                        {Math.floor(
-                          (new Date().getTime() - new Date(r.fecha).getTime()) /
-                            (1000 * 60 * 60 * 24)
-                        )}
-                      </p>
+                      {formatFechaLocal(r.fecha)}
+                      
                     </div>
                     <div className="text-3xl font-bold text-gray-900">
                       {r.peso} kg

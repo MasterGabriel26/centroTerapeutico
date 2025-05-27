@@ -49,44 +49,41 @@ const Pacientes = () => {
     pacienteId: string,
     familiarId: string
   ) => {
-    const confirmar = window.confirm(
-      "¿Deseas asignar este familiar al paciente?"
-    );
-    if (!confirmar) return;
+    setConfirmDialog({
+      open: true,
+      message: "¿Deseas asignar este familiar al paciente?",
+      onConfirm: async () => {
+        const fecha = new Date().toLocaleDateString("es-MX");
 
-    const fecha = new Date().toLocaleDateString("es-MX");
+        await updateDoc(doc(db, "pacientes", pacienteId), {
+          familiar_id: familiarId,
+          updated_at: fecha,
+        });
 
-    // 1. Actualiza el paciente con el ID del familiar
-    await updateDoc(doc(db, "pacientes", pacienteId), {
-      familiar_id: familiarId,
-      updated_at: fecha,
+        await updateDoc(doc(db, "users", familiarId), {
+          paciente_id: pacienteId,
+          updated_at: fecha,
+        });
+
+        const [pacSnap, famSnap] = await Promise.all([
+          getDocs(collection(db, "pacientes")),
+          getDocs(collection(db, "users")),
+        ]);
+
+        const nuevosPacientes = pacSnap.docs.map((doc) => ({
+          id: doc.id,
+          ...doc.data(),
+        }));
+        const nuevosFamiliares = famSnap.docs
+          .map((doc) => ({ id: doc.id, ...doc.data() }))
+          .filter((f: any) => f.tipo === "familiar");
+
+        setPacientes(nuevosPacientes);
+        setFamiliares(nuevosFamiliares);
+        setPacienteSeleccionado(null);
+        setConfirmDialog({ ...confirmDialog, open: false });
+      },
     });
-
-    // 2. Actualiza el familiar con el ID del paciente
-    await updateDoc(doc(db, "users", familiarId), {
-      paciente_id: pacienteId,
-      updated_at: fecha,
-    });
-
-    alert("Familiar asignado correctamente");
-
-    // 🔁 Recargar ambas listas
-    const [pacSnap, famSnap] = await Promise.all([
-      getDocs(collection(db, "pacientes")),
-      getDocs(collection(db, "users")),
-    ]);
-
-    const nuevosPacientes = pacSnap.docs.map((doc) => ({
-      id: doc.id,
-      ...doc.data(),
-    }));
-    const nuevosFamiliares = famSnap.docs
-      .map((doc) => ({ id: doc.id, ...doc.data() }))
-      .filter((f: any) => f.tipo === "familiar");
-
-    setPacientes(nuevosPacientes);
-    setFamiliares(nuevosFamiliares);
-    setPacienteSeleccionado(null);
   };
 
   useEffect(() => {
@@ -166,7 +163,7 @@ const Pacientes = () => {
               leftIcon={<Search size={18} />}
             />
           </div>
-          <div className="flex gap-2">
+          {/* <div className="flex gap-2">
             {["todos", "activo", "inactivo"].map((status) => (
               <Button
                 key={status}
@@ -176,9 +173,28 @@ const Pacientes = () => {
                 {status[0].toUpperCase() + status.slice(1)}
               </Button>
             ))}
-          </div>
+          </div> */}
         </div>
       </div>
+
+      <Dialog
+        isOpen={confirmDialog.open}
+        onClose={() => setConfirmDialog({ ...confirmDialog, open: false })}
+        title="Confirmar asignación"
+      >
+        <p className="text-sm text-gray-700 mb-4">{confirmDialog.message}</p>
+        <div className="flex justify-end gap-3">
+          <Button
+            variant="outline"
+            onClick={() => setConfirmDialog({ ...confirmDialog, open: false })}
+          >
+            Cancelar
+          </Button>
+          <Button variant="primary" onClick={confirmDialog.onConfirm}>
+            Confirmar
+          </Button>
+        </div>
+      </Dialog>
 
       <Dialog
         isOpen={showNewDialog}
@@ -228,14 +244,12 @@ const Pacientes = () => {
         <div className="space-y-4 max-h-[70vh] overflow-y-auto">
           {familiares
             .filter((f) => {
-              const matchesTipo = f.tipo === "familiar" && !f.paciente_id;
-
+              const matchesTipo = f.tipo === "familiar"; // Ya no filtramos por !f.paciente_id
               const matchesSearch =
                 f.nombre_completo
                   ?.toLowerCase()
                   .includes(searchFamiliar.toLowerCase()) ||
                 f.email?.toLowerCase().includes(searchFamiliar.toLowerCase());
-
               return matchesTipo && matchesSearch;
             })
             .map((f) => (
@@ -282,75 +296,83 @@ const Pacientes = () => {
         </div>
       </Dialog>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-2 gap-6">
         {filteredPacientes.map((paciente) => (
-          <Card key={paciente.id} hoverable className="overflow-visible">
-            <div className="">
+          <Card
+            key={paciente.id}
+            className="overflow-visible border border-gray-200 hover:shadow-md transition-all bg-white rounded-xl"
+          >
+            <div className="space-y-2">
               <div className="flex justify-between items-start">
-                <h3 className="text-lg font-semibold text-gray-900">
-                  {paciente.nombre_completo}
-                </h3>
-                <div className="relative group">
-                  <button className="p-1 rounded-full hover:bg-gray-100">
-                    <MoreVertical size={18} className="text-gray-500" />
-                  </button>
+                <div>
+                  <h3 className="text-md font-semibold text-gray-900 flex items-center gap-2">
+                    <Users className="w-5 h-5 text-blue-500" />
+                    {paciente.nombre_completo}
+                  </h3>
+                  {paciente.familiar_id && (
+                    <p className="text-sm text-gray-500 mt-2">
+                      Familiar:{" "}
+                      <span className="text-gray-700 font-medium">
+                        {familiares.find((f) => f.id === paciente.familiar_id)
+                          ?.nombre_completo || "Desconocido"}
+                      </span>
+                    </p>
+                  )}
+                  <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <Calendar className="w-4 h-4 text-primary-500" />
+                      <span>Ingreso: {paciente.fecha_ingreso}</span>
+                    </div>
+                    {paciente.fecha_salida && (
+                      <div className="flex items-center gap-1">
+                        <Calendar className="w-4 h-4 text-red-400" />
+                        <span>Salida: {paciente.fecha_salida}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-500 mt-2">
+                    Motivo:{" "}
+                    <span className="text-gray-700 font-medium">
+                      {paciente.motivo_anexo}
+                    </span>
+                  </p>
+                </div>
+                <div>
+                  <span
+                    className={`inline-block text-xs font-medium px-2 py-1 rounded-full ${
+                      paciente.estado === "activo"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-200 text-gray-600"
+                    }`}
+                  >
+                    {paciente.estado === "activo" ? "Activo" : "Inactivo"}
+                  </span>
                 </div>
               </div>
-              {paciente.familiar_id && (
-                <p className="text-sm text-gray-600 mt-2">
-                  Familiar:{" "}
-                  <span className="font-medium">
-                    {familiares.find((f) => f.id === paciente.familiar_id)
-                      ?.nombre_completo || "Desconocido"}
-                  </span>
-                </p>
-              )}
-              {/* <span
-                className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full mt-2 ${
-                  paciente.estado === "activo"
-                    ? "bg-success-100 text-success-800"
-                    : "bg-gray-100 text-gray-800"
-                }`}
-              >
-                {paciente.estado === "activo" ? "Activo" : "Inactivo"}
-              </span> */}
-              <div className="flex items-center justify-between gap-1 mt-4">
-                {/* Fecha */}
-                <div className="flex items-center flex-1 min-w-0">
-                  <Calendar
-                    size={16}
-                    className="text-gray-500 mr-2 flex-shrink-0"
-                  />
-                  <div className="truncate">
-                    <p className="text-xs text-gray-500">Ingreso</p>
-                    <p className="text-sm text-gray-900">
-                      {paciente.fecha_ingreso}
-                    </p>
-                  </div>
-                </div>
 
-                {/* Botones */}
-                <div className="flex gap-1 w-fit">
-                  <Button
-                    size="sm"
-                    onClick={() => setPacienteSeleccionado(paciente)}
-                  >
-                    Asignar Familiar
-                  </Button>
-                  <Button
-                    size="sm"
-                    onClick={() => {
-                      setPacienteDrawer(paciente);
-                      setDrawerOpen(true);
-                    }}
-                  >
-                    Detalle
-                  </Button>
-                </div>
+              <div className="flex justify-between gap-2 mt-3">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setPacienteSeleccionado(paciente)}
+                >
+                  Asignar Familiar
+                </Button>
+                <Button
+                  size="sm"
+                  variant="primary"
+                  onClick={() => {
+                    setPacienteDrawer(paciente);
+                    setDrawerOpen(true);
+                  }}
+                >
+                  Ver Detalle
+                </Button>
               </div>
             </div>
           </Card>
         ))}
+
         <PacienteDrawerView
           pacienteDrawer={pacienteDrawer}
           open={drawerOpen}

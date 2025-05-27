@@ -21,6 +21,7 @@ import { Activity } from 'lucide-react';
 import Familiares from './pages/Familiares';
 import RegisterForm from './components/auth/RegisterForm';
 import Gastos from './pages/Gastos';
+import PagosFamiliarView from './pages/PagosFamiliarView';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -84,7 +85,8 @@ const App: React.FC = () => {
         <Route path="familiares" element={<Familiares />} />
         <Route path="gastos" element={<Gastos />} />
         <Route path="pagos" element={<Pagos />} />
-        <Route path="mi-familiar" element={<FamiliarView />} />
+        <Route path="pagos_familiar" element={<PagosFamiliarView />} />
+        <Route path="mi-familiar" element={<FamiliarView usuarioId={usuario?.id} />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Route>
     </Routes>

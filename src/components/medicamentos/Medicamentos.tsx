@@ -80,7 +80,7 @@ const MedicamentosForm: React.FC<Props> = ({ pacienteId, usuarioId }) => {
         {medicamentos.map(m => (
           <div key={m.id} className="bg-white rounded-lg shadow p-4 border-l-4 border-blue-500">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="font-semibold text-gray-800">{m.nombre}</h3>
+              <h3 className="font-bold text-xl text-gray-800">{m.nombre}</h3>
               <div className="space-x-2">
                 <Button size="sm" onClick={() => handleEditar(m)}>Editar</Button>
                 <Button size="sm" onClick={() => handleEliminar(m.id)}>Eliminar</Button>

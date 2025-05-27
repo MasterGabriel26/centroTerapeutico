@@ -9,6 +9,7 @@ const supabaseAnonKey =
 export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 export type Usuario = {
+  auth_uid?:string
   id: string;
   email: string;
   password?: string;

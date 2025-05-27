@@ -13,6 +13,9 @@ import DataTable from "../../components/ui/DataTable";
 import PacienteDrawerView from "../../components/drawers/PacienteDrawer";
 import { Paciente } from "./types/paciente"; // Asegúrate de que este tipo de Paciente sea correcto
 import { Column } from "../../components/ui/DataTable";
+import CrearPacienteDialog from "./components/CrearPacienteDialog";
+import { getPacientes } from "./services/pacienteService"; // Ajusta la ruta si estás en otro nivel
+import PacienteDetalleDialog from "./components/PacienteDetalleDialog";
 
 const PacientesList: React.FC = () => {
     const [showNewDialog, setShowNewDialog] = useState(false);
@@ -47,7 +50,7 @@ const PacientesList: React.FC = () => {
         // **MODIFICACIÓN AQUÍ**
         // Primero, verifica si p.nombre existe y es una cadena
         const pacienteNombre = p.nombre_completo ? p.nombre_completo.toLowerCase() : ''; // Si p.nombre es null/undefined, usa una cadena vacía
-      console.log("Nombre del paciente en minúsculas:", pacienteNombre);
+        console.log("Nombre del paciente en minúsculas:", pacienteNombre);
         const searchLower = searchQuery;
 
         const matchesSearch = pacienteNombre.includes(searchLower);
@@ -80,10 +83,6 @@ const PacientesList: React.FC = () => {
             accessorKey: "fecha_ingreso" as keyof Paciente,
         },
         {
-            header: "Motivo",
-            accessorKey: "motivo_anexo" as keyof Paciente,
-        },        
-        {
             header: "Estado",
             accessorKey: "estado" as keyof Paciente,
             cell: ({ cell }: any) => (
@@ -99,13 +98,13 @@ const PacientesList: React.FC = () => {
             ),
         },
         {
-            header: "",
+            header: "Options",
             id: "actions",
             cell: ({ row }: any) => (
-                <div className="flex gap-2">
+                <div className="flex justify-center">
                     <Button
+                        variant="outlinePrimary"
                         size="sm"
-                        variant="outline"
                         onClick={() => {
                             setPacienteDrawer(row.original);
                             setDrawerOpen(true);
@@ -113,9 +112,13 @@ const PacientesList: React.FC = () => {
                     >
                         Detalle
                     </Button>
+
+
+
                 </div>
             ),
-        },
+        }
+
     ];
 
     return (
@@ -126,11 +129,11 @@ const PacientesList: React.FC = () => {
                     <p className="text-gray-500">Gestión de personas en tratamiento</p>
                 </div>
                 <Button
-                    variant="primary"
-                    icon={<Plus size={18} />}
                     onClick={() => setShowNewDialog(true)}
+                    className="bg-[#2A93C9] hover:bg-[#1B7CAD] text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
                 >
-                    Nuevo Paciente
+                    <Plus size={18} />
+                    Agregar Paciente
                 </Button>
             </div>
 
@@ -169,14 +172,23 @@ const PacientesList: React.FC = () => {
                 emptyText="No hay pacientes registrados"
             />
 
-            <PacienteDrawerView
-                pacienteDrawer={pacienteDrawer}
+            <PacienteDetalleDialog
                 open={drawerOpen}
                 onClose={() => setDrawerOpen(false)}
-                onOpen={() => {}}
-                familiares={[]}
-                usuario={null}
+                paciente={pacienteDrawer}
             />
+
+
+
+            <CrearPacienteDialog
+                isOpen={showNewDialog}
+                onClose={() => setShowNewDialog(false)}
+                onPacienteCreado={async () => {
+                    const nuevos = await getPacientes();
+                    setPacientes(nuevos);
+                }}
+            />
+
         </div>
     );
 };

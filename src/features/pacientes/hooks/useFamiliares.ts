@@ -1,29 +1,27 @@
-// features/pacientes/hooks/usePacientes.ts
-import { useState, useEffect } from "react";
-import { getPacientes, addPaciente } from "../services/pacienteService";
-import { Paciente } from "../types/paciente";
+import { useState } from 'react';
+import { addFamiliar, getFamiliares } from '../services/familiarService';
+import { Familiar } from '../types/familiar';
 
-export const usePacientes = () => {
-  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+export const useFamiliares = (pacienteId: string) => {
+  const [familiares, setFamiliares] = useState<Familiar[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const fetchPacientes = async () => {
+  const cargarFamiliares = async () => {
     setLoading(true);
-    const data = await getPacientes();
-    setPacientes(data);
+    const lista = await getFamiliares(pacienteId);
+    setFamiliares(lista);
     setLoading(false);
   };
 
-  const createPaciente = async (paciente: Paciente) => {
-    setLoading(true);
-    await addPaciente(paciente);
-    await fetchPacientes();
-    setLoading(false);
+  const crearFamiliar = async (data: Familiar) => {
+    await addFamiliar(pacienteId, data);
+    await cargarFamiliares();
   };
 
-  useEffect(() => {
-    fetchPacientes();
-  }, []);
-
-  return { pacientes, loading, fetchPacientes, createPaciente };
+  return {
+    familiares,
+    loading,
+    cargarFamiliares,
+    crearFamiliar,
+  };
 };

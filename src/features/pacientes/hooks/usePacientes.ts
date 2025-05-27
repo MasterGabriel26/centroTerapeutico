@@ -5,12 +5,22 @@ import { Paciente } from "../types/paciente";
 
 export const usePacientes = () => {
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const createPaciente = async (paciente: Paciente) => {
+  const createPaciente = async (paciente: Omit<Paciente, "id" | "estado" | "creado">) => {
     setLoading(true);
-    await addPaciente(paciente);
-    setLoading(false);
+    setError(null);
+    try {
+      const id = await addPaciente(paciente);
+      return id;
+    } catch (err: any) {
+      console.error("Error al crear paciente:", err);
+      setError("No se pudo crear el paciente.");
+      return null;
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return { createPaciente, loading };
+  return { createPaciente, loading, error };
 };

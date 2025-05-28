@@ -9,10 +9,12 @@ const FamiliaresTab = ({ pacienteId }: { pacienteId: string }) => {
   const [openModal, setOpenModal] = useState(false);
   const { familiares, crearFamiliar, cargarFamiliares } = useFamiliares(pacienteId);
 
-  // Cargar familiares al montar el componente (por si es tab)
   useEffect(() => {
     cargarFamiliares();
   }, [cargarFamiliares]);
+
+  const isGrid = familiares.length > 4;
+  const isScrollable = familiares.length > 8;
 
   return (
     <div className="p-4 text-gray-700 font-poppins">
@@ -31,7 +33,7 @@ const FamiliaresTab = ({ pacienteId }: { pacienteId: string }) => {
           onSubmit={async (familiarData) => {
             await crearFamiliar(familiarData);
             setOpenModal(false);
-            await cargarFamiliares(); // también recarga después de agregar
+            await cargarFamiliares();
           }}
           onCancel={() => setOpenModal(false)}
         />
@@ -40,18 +42,24 @@ const FamiliaresTab = ({ pacienteId }: { pacienteId: string }) => {
       {familiares.length === 0 ? (
         <p className="text-sm text-gray-500 italic">No hay familiares registrados.</p>
       ) : (
-        <ul className="mt-3 space-y-2">
+        <div
+          className={`
+            mt-3 
+            ${isGrid ? "grid grid-cols-1 md:grid-cols-2 gap-4" : "space-y-2"}
+            ${isScrollable ? "max-h-[400px] overflow-y-auto pr-2" : ""}
+          `}
+        >
           {familiares.map((f) => (
-            <li key={f.id} className="border p-3 rounded-lg bg-white shadow-sm">
+            <div key={f.id} className="border p-3 rounded-lg bg-white shadow-sm">
               <p className="font-semibold">{f.nombre}</p>
               <p className="text-sm text-gray-600">{f.parentesco}</p>
               <p className="text-sm text-gray-600">
                 📞 {f.telefono1} {f.telefono2 && ` / ${f.telefono2}`}
               </p>
               <p className="text-sm text-gray-500">✉️ {f.email}</p>
-            </li>
+            </div>
           ))}
-        </ul>
+        </div>
       )}
     </div>
   );

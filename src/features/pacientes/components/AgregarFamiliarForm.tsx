@@ -24,10 +24,18 @@ const AgregarFamiliarForm: React.FC<Props> = ({ onSubmit, onCancel }) => {
     email: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({ ...prev, [name]: value }));
-  };
+const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const { name, value } = e.target;
+
+  // Validar solo números en campos de teléfono
+  const soloNumeros = ['telefono1', 'telefono2'];
+  if (soloNumeros.includes(name)) {
+    if (!/^\d*$/.test(value)) return; // evita letras
+  }
+
+  setFormData({ ...formData, [name]: value });
+};
+
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,11 +80,17 @@ const AgregarFamiliarForm: React.FC<Props> = ({ onSubmit, onCancel }) => {
           name="telefono1"
           label="Teléfono principal"
           placeholder="Ej: 3201234567"
+           inputMode="numeric"
+           pattern="[0-9]*"
+           type="tel"
           value={formData.telefono1}
           onChange={handleChange}
         />
         <Input
           name="telefono2"
+           inputMode="numeric"
+           pattern="[0-9]*"
+           type="tel"
           label="Teléfono secundario"
           placeholder="Opcional"
           value={formData.telefono2}

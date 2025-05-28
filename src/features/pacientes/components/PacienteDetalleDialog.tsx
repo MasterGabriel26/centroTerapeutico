@@ -32,49 +32,45 @@ const PacienteDetalleDialog: React.FC<Props> = ({ open, onClose, paciente }) => 
         </button>
 
         {/* Header superior con color */}
-        <div className="bg-[#2A93C9] h-32 w-full relative">
-          <div className="absolute left-1/2 transform -translate-x-1/2 -bottom-10">
-            <img
-              src="https://upload.wikimedia.org/wikipedia/commons/9/99/Flag_of_Peru_%281884%E2%80%931950%29.svg"
-              alt="Foto perfil"
-              className="w-24 h-24 rounded-full border-4 border-white shadow-md object-cover"
-            />
-          </div>
-        </div>
 
+        <img
+          src="https://upload.wikimedia.org/wikipedia/commons/9/99/Flag_of_Peru_%281884%E2%80%931950%29.svg"
+          alt="Foto perfil"
+          className="w-24 h-24  border-4 border-white shadow-md object-cover mt-10 ml-10"
+        />
         {/* Nombre y correo */}
-        <div className="mt-14 text-center px-4">
+        <div className="mt-5 text-center px-4">
           <h2 className="text-xl font-semibold text-gray-800">{paciente.nombre_completo}</h2>
           <p className="text-sm text-gray-500">{paciente.email}</p>
         </div>
 
         {/* Tabs + contenido */}
         <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8">
-         <Tabs selectedIndex={tabIndex} onSelect={setTabIndex}>
-  <TabList selectedIndex={tabIndex} onSelect={setTabIndex}>
-    <Tab>Información</Tab>
-    <Tab>Familiares</Tab>
-    <Tab>Fotografías</Tab>
-    <Tab>Fórmulas</Tab>
-    <Tab>Novedades</Tab>
-  </TabList>
+          <Tabs selectedIndex={tabIndex} onSelect={setTabIndex}>
+            <TabList selectedIndex={tabIndex} onSelect={setTabIndex}>
+              <Tab>Información</Tab>
+              <Tab>Familiares</Tab>
+              <Tab>Fotografías</Tab>
+              <Tab>Receta médica</Tab>
+              <Tab>Novedades</Tab>
+            </TabList>
 
-  <TabPanel>
-    <InfoGeneral paciente={paciente} />
-  </TabPanel>
-  <TabPanel>
-    <FamiliaresTab pacienteId={paciente.id!} />
-  </TabPanel>
-  <TabPanel>
-    <ImagenesTab pacienteId={paciente.id!} />
-  </TabPanel>
-  <TabPanel>
-    <FormulaTab pacienteId={paciente.id!} />
-  </TabPanel>
-  <TabPanel>
-    <NovedadesTab pacienteId={paciente.id!} />
-  </TabPanel>
-</Tabs>
+            <TabPanel>
+              <InfoGeneral paciente={paciente} />
+            </TabPanel>
+            <TabPanel>
+              <FamiliaresTab pacienteId={paciente.id!} />
+            </TabPanel>
+            <TabPanel>
+              <ImagenesTab pacienteId={paciente.id!} />
+            </TabPanel>
+            <TabPanel>
+              <FormulaTab pacienteId={paciente.id!} />
+            </TabPanel>
+            <TabPanel>
+              <NovedadesTab pacienteId={paciente.id!} />
+            </TabPanel>
+          </Tabs>
 
         </div>
       </div>

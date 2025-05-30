@@ -194,102 +194,64 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar - Desktop */}
-      <aside className="hidden lg:flex flex-col w-72 bg-white border-r border-gray-200 fixed h-full z-20">
-        {/* Header del Sidebar */}
-        <div className="px-6 py-5 border-b border-gray-200">
-          <div className="flex items-center gap-3">
-            <img 
-              src={LOGO} 
-              alt="Logo Centro Terapéutico" 
-              className="w-10 h-10 object-contain"
-            />
-            <div>
-              <h1 className="text-lg font-bold text-gray-900">Centro Terapéutico</h1>
-              <p className="text-xs text-gray-500">Sistema de gestión integral</p>
-            </div>
-          </div>
-        </div>
+     {/* Sidebar - Desktop */}
+{/* Sidebar - Desktop */}
+<aside className="hidden lg:flex flex-col w-72 bg-white border-r border-gray-200 fixed h-full z-20">
+  {/* Header del Sidebar */}
+  <div className="px-6 py-5 border-b border-gray-200">
+    <div className="flex items-center gap-3">
+      <img 
+        src={LOGO} 
+        alt="Logo Centro Terapéutico" 
+        className="w-10 h-10 object-contain"
+      />
+      <div>
+        <h1 className="text-lg font-bold text-gray-900">Centro Terapéutico</h1>
+        <p className="text-xs text-gray-500">Sistema de gestión integral</p>
+      </div>
+    </div>
+  </div>
 
-        {/* Perfil del Usuario */}
-        <div className="px-4 py-4 border-b border-gray-200">
-          <UserDropdown />
-        </div>
+  {/* Perfil del Usuario */}
+  <div className="px-4 py-4 border-b border-gray-200">
+    <UserDropdown />
+  </div>
 
-        {/* Navegación */}
-        <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
-          <div className="mb-4">
-            <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Navegación principal
-            </h3>
+  {/* Navegación - Esta es la versión activa */}
+  <nav className="flex-1 px-4 py-4 space-y-1 overflow-y-auto">
+    <div className="mb-4">
+      <h3 className="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+        Navegación principal
+      </h3>
+      {!isFamiliar && <NavItem to="/dashboard" icon={<BarChart2 />} label="Dashboard" />}
+      {(isAdmin || isMedico) && (
+        <NavItem to="/pacientes" icon={<Users />} label="Pacientes" />
+      )}
+      {isAdmin && (
+        <>
+          <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Usuarios" />
+          <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
+        </>
+      )}
+      {isFamiliar && <NavItem to="/mi-familiar" icon={<UserIcon />} label="Mi Familiar" />}
+      {(isAdmin || isFamiliar) && <NavItem to="/pagos" icon={<CreditCard />} label="Pagos" />}
+    </div>
+  </nav>
 
-            {!isFamiliar && <NavItem to="/dashboard" icon={<BarChart2 />} label="Dashboard" />}
-
-            {(isAdmin || isMedico) && (
-              <>
-                <NavItem to="/pacientes" icon={<Users />} label="Pacientes" />
-              
-              </>
-            )}
-
- {(isAdmin) && (
-              <>
-              
-                <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Usuarios" />
-                <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
-              </>
-            )}
-
-
-            {isFamiliar && <NavItem to="/mi-familiar" icon={<UserIcon />} label="Mi Familiar" />}
-
-            {(isAdmin || isFamiliar) && <NavItem to="/pagos" icon={<CreditCard />} label="Pagos" />}
-          </div>
-
-        
-
-         {/* 
-        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
-          {!isFamiliar && <NavItem to="/dashboard" icon={<BarChart2 size={20} />} label="Dashboard" />}
-          
-          {(isAdmin || isMedico) && (
-            <>
-              <NavItem to="/pacientes" icon={<Users size={20} />} label="Pacientes" />
-              <NavItem to="/familiares" icon={<PersonStandingIcon size={20} />} label="Familiares" />
-              <NavItem to="/gastos" icon={<ClipboardList size={20} />} label="Gastos" />
-                 <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
-                
-            </>
-          )}
-
-          {isFamiliar && (
-            <NavItem to="/mi-familiar" icon={<User size={20} />} label="Mi Familiar" />
-          )}
-          
-          {(isAdmin || isFamiliar) && (
-            <NavItem to="/pagos" icon={<CreditCard size={20} />} label="Pagos" />
-          )}*/}
-          
-          {/* {isAdmin && (
-            <NavItem to="/configuracion" icon={<Settings size={20} />} label="Configuración" />
-          )} */}
-
-         {/* </nav>*/}
-
-        {/* Footer del Sidebar */}
-        <div className="px-4 py-4 border-t border-gray-200 mt-auto">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            fullWidth 
-            onClick={handleLogout} 
-            className="text-gray-700 hover:bg-gray-100 justify-start gap-2"
-          >
-            <LogOut size={16} />
-            Cerrar sesión
-          </Button>
-        </div>
-      </aside>
-
+  {/* Footer del Sidebar */}
+  <div className="px-4 py-4 border-t border-gray-200 mt-auto">
+    <Button 
+      variant="ghost" 
+      size="sm" 
+      fullWidth 
+      onClick={handleLogout} 
+      className="text-gray-700 hover:bg-gray-100 justify-start gap-2"
+    >
+      <LogOut size={16} />
+      Cerrar sesión
+    </Button>
+  </div>
+</aside>
       {/* Mobile Header */}
       <header className="lg:hidden fixed top-0 left-0 right-0 z-30 bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between shadow-sm">
         <div className="flex items-center gap-3">

@@ -18,7 +18,7 @@ import FamiliarView from './pages/FamiliarView';
 import PacientesList from '../src/features/pacientes/PacientesPage'; // Asegúrate de que la ruta sea correcta
 // Logo para preloader
 import { Activity } from 'lucide-react';
-import Familiares from './pages/Familiares';
+import Familiares from './pages/Usuarios';
 import RegisterForm from './components/auth/RegisterForm';
 import Gastos from './pages/Gastos';
 

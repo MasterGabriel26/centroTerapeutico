@@ -1,16 +1,78 @@
 import React, { useState } from 'react';
-import { Calendar, Clock, Activity, Camera, FileText, ArrowRight, ChevronDown } from 'lucide-react';
+import { Calendar, Clock, Activity, Camera, FileText, ArrowRight, ChevronDown,AlertCircle,User,CalendarCheck,ClipboardList,TrendingUp,Phone } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 
-// Datos simulados para la vista del familiar
-const anexado = {
-  id: '1',
-  nombre_completo: 'Juan Pérez López',
+const paciente = {
+  id: 'PT-8246',
+  nombre_completo: 'Carlos Alberto Méndez Rodríguez',
+  foto: null, // Puedes reemplazar con una URL de imagen si deseas
+  edad: 35,
+  genero: 'Masculino',
   fecha_ingreso: '2023-06-15',
-  estado: 'activo',
-  motivo_anexo: 'Adicción a alcohol',
-  familiar: 'María Pérez (Esposa)',
+  estado: 'Activo',
+  motivo_anexo: 'Tratamiento por dependencia al alcohol con cuadro de ansiedad asociado',
+  tipo_terapia: 'Cognitivo-Conductual + Grupo de Apoyo',
+  gravedad: 'Moderado',
+  terapeuta: 'Dra. Laura Vanessa Gutiérrez',
+  progreso: 65,
+  fase: 2,
+  proxima_cita: '2023-11-25',
+  familiar: 'Ana Lucía Méndez (Hermana)',
+  
+  // Nueva información ampliada
+  contacto_emergencia: {
+    nombre: 'Ana Lucía Méndez',
+    parentesco: 'Hermana',
+    telefono: '55-1234-5678',
+    email: 'ana.mendez@example.com',
+    direccion: 'Calle Flores #123, Col. Jardines, CDMX'
+  },
+  
+  notas_importantes: [
+    'Buena respuesta a terapia grupal',
+    'Asiste regularmente a sesiones',
+    'Requiere seguimiento nutricional',
+    'Permiso de visita los fines de semana'
+  ],
+  
+  horario_visitas: {
+    dias: ['Sábado', 'Domingo'],
+    horario: '10:00 AM - 6:00 PM'
+  },
+  
+  medicacion: [
+    {
+      nombre: 'Naltrexona',
+      dosis: '50mg/día',
+      proposito: 'Reducción de craving'
+    },
+    {
+      nombre: 'Sertralina',
+      dosis: '100mg/día',
+      proposito: 'Manejo de ansiedad'
+    }
+  ],
+  
+  proximos_eventos: [
+    {
+      fecha: '2023-11-15',
+      evento: 'Sesión familiar',
+      hora: '4:00 PM'
+    },
+    {
+      fecha: '2023-11-20',
+      evento: 'Evaluación médica',
+      hora: '11:00 AM'
+    }
+  ],
+  
+  normas_centro: [
+    'No traer alimentos o bebidas del exterior',
+    'Prohibido llevar objetos punzocortantes',
+    'Uso de cubrebocas obligatorio',
+    'Respetar horarios de visita'
+  ]
 };
 
 const registrosTimeline = [
@@ -98,7 +160,7 @@ const FamiliarView = () => {
 
   // Calcular el progreso en días
   const calcularDiasInternado = () => {
-    const fechaInicio = new Date(anexado.fecha_ingreso);
+    const fechaInicio = new Date(paciente.fecha_ingreso);
     const hoy = new Date();
     const diferencia = hoy.getTime() - fechaInicio.getTime();
     return Math.floor(diferencia / (1000 * 3600 * 24));
@@ -123,52 +185,230 @@ const FamiliarView = () => {
       </div>
 
       {/* Tarjeta de información del anexado */}
-      <div className="mb-8">
-        <Card className="bg-gradient-to-r from-primary-600 to-primary-800 text-white overflow-hidden">
-          <div className="p-6 md:p-8">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-              <div>
-                <h2 className="text-2xl font-bold mb-2">{anexado.nombre_completo}</h2>
-                <p className="text-primary-100 mb-4">{anexado.motivo_anexo}</p>
-                
-                <div className="flex items-center gap-4 mb-6">
-                  <div className="flex items-center">
-                    <Calendar className="h-5 w-5 mr-2 text-primary-200" />
-                    <div>
-                      <p className="text-xs text-primary-200">Fecha de ingreso</p>
-                      <p className="text-sm font-medium">{new Date(anexado.fecha_ingreso).toLocaleDateString('es-MX')}</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-center">
-                    <Clock className="h-5 w-5 mr-2 text-primary-200" />
-                    <div>
-                      <p className="text-xs text-primary-200">Tiempo internado</p>
-                      <p className="text-sm font-medium">{calcularDiasInternado()} días</p>
-                    </div>
-                  </div>
-                </div>
+     <div className="mb-8">
+  <div className="bg-gradient-to-br from-blue-50 to-blue-50 text-gray-800 overflow-hidden shadow-lg rounded-2xl border border-blue-100 relative">
+    {/* Ribbon de estado - Versión mejorada */}
+    <div className={`absolute top-4 right-4 px-3 py-1 rounded-full text-sm font-semibold shadow-sm z-10 ${
+      paciente.estado === 'Activo' 
+        ? 'bg-green-100 text-green-800 border border-green-200' 
+        : paciente.estado === 'Alta'
+          ? 'bg-blue-100 text-blue-800 border border-blue-200'
+          : 'bg-amber-100 text-amber-800 border border-amber-200'
+    }`}>
+      <span className="relative flex items-center">
+        <span className={`animate-ping absolute inline-flex h-2 w-2 rounded-full ${
+          paciente.estado === 'Activo' ? 'bg-green-400' : 
+          paciente.estado === 'Alta' ? 'bg-blue-400' : 'bg-amber-400'
+        } opacity-75`}></span>
+        <span className={`relative inline-flex rounded-full h-2 w-2 mr-2 ${
+          paciente.estado === 'Activo' ? 'bg-green-500' : 
+          paciente.estado === 'Alta' ? 'bg-blue-500' : 'bg-amber-500'
+        }`}></span>
+        {paciente.estado}
+      </span>
+    </div>
+
+    {/* Contenido principal */}
+    <div className="p-6 md:p-8 pt-10"> {/* Aumentado el padding-top */}
+      {/* Sección superior con foto y datos básicos */}
+      <div className="flex flex-col md:flex-row gap-6 items-start">
+        {/* Foto del paciente - posición ajustada */}
+        <div className="w-full md:w-40 lg:w-48 flex-shrink-0 -mt-8 md:-mt-12 relative mx-auto md:mx-0"> {/* Reducido el margen negativo */}
+          <div className="relative pb-[125%] rounded-2xl overflow-hidden shadow-xl border-4 border-white bg-gradient-to-br from-blue-100 to-blue-200 mt-10">
+            {paciente.foto ? (
+              <img 
+                src={paciente.foto} 
+                alt={paciente.nombre_completo}
+                className="absolute h-full w-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <User className="h-16 w-16 text-blue-500" />
               </div>
-              
-              <div className="mt-4 md:mt-0">
-                <span className="inline-block px-3 py-1 bg-white/20 rounded-full text-sm font-medium">
-                  Estado: Activo
-                </span>
-              </div>
+            )}
+            <div className="absolute inset-0 bg-gradient-to-t from-blue-900/10 to-transparent"></div>
+          </div>
+        </div>
+
+        {/* Información principal */}
+        <div className="flex-1 space-y-3 w-full min-w-0">
+          <div className="min-w-0">
+            <h2 className="text-2xl md:text-3xl font-bold text-blue-900 mb-1 truncate">
+              {paciente.nombre_completo}
+            </h2>
+            <div className="flex items-center flex-wrap gap-2">
+              <span className="text-sm bg-blue-100 text-blue-800 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                #{paciente.id}
+              </span>
+              <span className="text-sm text-blue-700 whitespace-nowrap">
+                {paciente.edad} años
+              </span>
+              <span className="text-sm bg-blue-200/50 text-blue-800 px-2.5 py-0.5 rounded-full whitespace-nowrap">
+                {paciente.genero}
+              </span>
             </div>
-            
-            <div className="mt-6">
-              <div className="flex justify-between mb-2">
-                <span className="text-sm font-medium">Progreso de recuperación</span>
-                <span className="text-sm font-medium">75%</span>
+          </div>
+
+          {/* Tarjeta de motivo - diseño más suave */}
+          <div className="bg-white/90 p-4 rounded-xl border border-blue-100 shadow-sm">
+            <div className="flex items-start gap-3">
+              <div className="bg-blue-100 p-2 rounded-lg text-blue-600 mt-0.5">
+                <ClipboardList className="h-5 w-5" />
               </div>
-              <div className="w-full bg-white/20 rounded-full h-2.5">
-                <div className="bg-white h-2.5 rounded-full" style={{ width: '75%' }}></div>
+              <div className="min-w-0">
+                <p className="text-blue-900 font-medium italic mb-2 break-words">
+                  "{paciente.motivo_anexo}"
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  <span className="text-xs bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full border border-blue-200 whitespace-nowrap">
+                    {paciente.tipo_terapia}
+                  </span>
+                  <span className="text-xs bg-blue-200/50 text-blue-800 px-2.5 py-1 rounded-full border border-blue-200/50 whitespace-nowrap">
+                    {paciente.gravedad}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
-        </Card>
+        </div>
       </div>
+
+      {/* Sección de información clínica - tarjetas más suaves */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6">
+        <div className="bg-white/90 p-3 rounded-xl border border-blue-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-blue-600 uppercase tracking-wider">Ingreso</p>
+              <p className="text-sm font-medium text-blue-900">
+                {new Date(paciente.fecha_ingreso).toLocaleDateString('es-MX', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 p-3 rounded-xl border border-blue-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+              <Clock className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-blue-600 uppercase tracking-wider">Días internado</p>
+              <p className="text-sm font-medium text-blue-900">
+                {calcularDiasInternado()} días
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 p-3 rounded-xl border border-blue-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+              <CalendarCheck className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-xs text-blue-600 uppercase tracking-wider">Próxima cita</p>
+              <p className="text-sm font-medium text-blue-900">
+                {new Date(paciente.proxima_cita || Date.now() + 7*24*60*60*1000)
+                  .toLocaleDateString('es-MX', { day: 'numeric', month: 'short' })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white/90 p-3 rounded-xl border border-blue-100 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+              <User className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <p className="text-xs text-blue-600 uppercase tracking-wider">Terapeuta</p>
+              <p className="text-sm font-medium text-blue-900 truncate">
+                {paciente.terapeuta}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Progreso del tratamiento - diseño más cálido */}
+      <div className="bg-white/90 p-4 rounded-xl border border-blue-100 shadow-sm mb-6">
+        <div className="flex justify-between items-center mb-3">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-5 w-5 text-blue-600" />
+            <span className="text-sm font-medium text-blue-700">Progreso del tratamiento</span>
+          </div>
+          <span className="text-sm font-bold bg-blue-100 text-blue-800 px-2.5 py-1 rounded-full">
+            {paciente.progreso}%
+          </span>
+        </div>
+
+        <div className="w-full bg-blue-200 rounded-full h-2.5">
+          <div 
+            className="bg-gradient-to-r from-blue-400 to-blue-600 h-2.5 rounded-full shadow-[0_2px_8px_rgba(59,130,246,0.3)]" 
+            style={{ width: `${paciente.progreso}%` }}
+          ></div>
+        </div>
+
+        <div className="flex justify-between mt-2 text-xs text-blue-600">
+          <span>Inicio</span>
+          <span className="text-blue-700 font-medium">Fase {paciente.fase} de 4</span>
+          <span>Finalización</span>
+        </div>
+      </div>
+
+      {/* Información para familiares - sección destacada */}
+      <div className="bg-blue-100/50 p-4 rounded-xl border border-blue-200 mb-6">
+        <h3 className="text-lg font-semibold text-blue-900 mb-3 flex items-center gap-2">
+          <User className="h-5 w-5 text-blue-700" />
+          Información para familiares
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-white/95 p-3 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                <Phone className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-blue-600 uppercase tracking-wider">Contacto de emergencia</p>
+                <p className="text-sm font-medium text-blue-900">
+                  {paciente.familiar}
+                </p>
+                <p className="text-xs text-blue-700">
+                  {paciente.contacto_emergencia?.telefono || 'Contactar al centro'}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white/95 p-3 rounded-lg border border-blue-200">
+            <div className="flex items-center gap-3">
+              <div className="bg-blue-100 p-2 rounded-lg text-blue-600">
+                <AlertCircle className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="text-xs text-blue-600 uppercase tracking-wider">Horario de visitas</p>
+                <p className="text-sm font-medium text-blue-900">
+                  Sábados y Domingos
+                </p>
+                <p className="text-xs text-blue-700">
+                  10:00 AM - 6:00 PM
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* Tabs para Timeline y Pagos */}
       <div className="mb-8">

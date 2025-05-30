@@ -25,6 +25,7 @@ import { useAuthStore } from "../../store/authStore"
 import { Button } from "../ui/Button"
 import LOGO from "../../../public/logo_sin_fondo.png"
 
+
 const DashboardLayout: React.FC = () => {
   const { usuario, logout } = useAuthStore()
   const navigate = useNavigate()
@@ -245,7 +246,34 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
           </div>
 
         
-        </nav>
+
+         {/* 
+        <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
+          {!isFamiliar && <NavItem to="/dashboard" icon={<BarChart2 size={20} />} label="Dashboard" />}
+          
+          {(isAdmin || isMedico) && (
+            <>
+              <NavItem to="/pacientes" icon={<Users size={20} />} label="Pacientes" />
+              <NavItem to="/familiares" icon={<PersonStandingIcon size={20} />} label="Familiares" />
+              <NavItem to="/gastos" icon={<ClipboardList size={20} />} label="Gastos" />
+                 <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
+                
+            </>
+          )}
+
+          {isFamiliar && (
+            <NavItem to="/mi-familiar" icon={<User size={20} />} label="Mi Familiar" />
+          )}
+          
+          {(isAdmin || isFamiliar) && (
+            <NavItem to="/pagos" icon={<CreditCard size={20} />} label="Pagos" />
+          )}*/}
+          
+          {/* {isAdmin && (
+            <NavItem to="/configuracion" icon={<Settings size={20} />} label="Configuración" />
+          )} */}
+
+         {/* </nav>*/}
 
         {/* Footer del Sidebar */}
         <div className="px-4 py-4 border-t border-gray-200 mt-auto">

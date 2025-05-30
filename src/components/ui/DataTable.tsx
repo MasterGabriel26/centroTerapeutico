@@ -1,82 +1,175 @@
-// src/components/ui/DataTable.tsx
 import React from "react";
+import { ArrowDown, ArrowUp, Loader2 } from "lucide-react";
 
-export interface Column<T> {  // 👈 Agrega el "export"
+export interface Column<T> {
   header: string;
   accessorKey?: keyof T;
   id?: string;
   cell?: (props: any) => React.ReactNode;
+  sortable?: boolean;
+  align?: "left" | "center" | "right";
 }
 
 interface DataTableProps<T> {
   columns: Column<T>[];
   data: T[];
   loading?: boolean;
-  emptyText?: string;
+  emptyText?: string | React.ReactNode;
+  onRowClick?: (row: T) => void;
+  className?: string;
 }
 
-function DataTable<T extends { id?: string | number }>({ columns, data, loading, emptyText = "Sin registros" }: DataTableProps<T>) {
+function DataTable<T extends { id?: string | number }>({
+  columns,
+  data,
+  loading,
+  emptyText = "No hay registros disponibles",
+  onRowClick,
+  className = "",
+}: DataTableProps<T>) {
+  const [sortConfig, setSortConfig] = React.useState<{
+    key: keyof T | string | null;
+    direction: "asc" | "desc";
+  }>({ key: null, direction: "asc" });
+
+  const sortedData = React.useMemo(() => {
+    if (!sortConfig.key) return data;
+
+    return [...data].sort((a, b) => {
+      // @ts-ignore
+      const aValue = a[sortConfig.key as keyof T];
+      // @ts-ignore
+      const bValue = b[sortConfig.key as keyof T];
+
+      if (aValue === bValue) return 0;
+      if (aValue == null) return 1;
+      if (bValue == null) return -1;
+
+      if (typeof aValue === "string" && typeof bValue === "string") {
+        return sortConfig.direction === "asc"
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
+
+      return sortConfig.direction === "asc"
+        ? aValue < bValue
+          ? -1
+          : 1
+        : aValue > bValue
+        ? -1
+        : 1;
+    });
+  }, [data, sortConfig]);
+
+  const requestSort = (key: keyof T | string) => {
+    let direction: "asc" | "desc" = "asc";
+    if (sortConfig.key === key && sortConfig.direction === "asc") {
+      direction = "desc";
+    }
+    setSortConfig({ key, direction });
+  };
+
   return (
-    <div className="overflow-x-auto rounded-xl border bg-white shadow-sm">
-     <table className="min-w-full text-sm text-gray-700">
-  <thead>
-    <tr className="bg-gray-100 text-gray-600 font-semibold">
-      {columns.map((col, idx) => (
-        <th
-          key={String(col.id || col.accessorKey || idx)}
-          className="px-4 py-3 align-middle text-left"
-        >
-          {col.header}
-        </th>
-      ))}
-    </tr>
-  </thead>
-  <tbody>
-    {loading ? (
-      <tr>
-        <td colSpan={columns.length} className="text-center py-8 align-middle">
-          Cargando...
-        </td>
-      </tr>
-    ) : data.length === 0 ? (
-      <tr>
-        <td colSpan={columns.length} className="text-center py-8 text-gray-400 align-middle">
-          {emptyText}
-        </td>
-      </tr>
-    ) : (
-      data.map((row, rowIdx) => (
-        <tr key={row.id || rowIdx} className="border-t hover:bg-gray-50">
-          {columns.map((col, colIdx) => {
-            const align =
-              col.accessorKey === "nombre_completo" ? "text-left" : "text-center";
-
-            return (
-              <td
-                key={String(col.id || col.accessorKey || colIdx)}
-                className={`px-4 py-3 align-middle ${align}`}
-              >
-                {col.cell
-                  ? col.cell({
-                      row: { original: row },
-                      cell: {
-                        getValue: () =>
-                          col.accessorKey ? row[col.accessorKey] : undefined,
-                      },
-                    })
-                  : col.accessorKey
-                  ? (row as any)[col.accessorKey]
-                  : null}
-              </td>
-            );
-          })}
-        </tr>
-      ))
-    )}
-  </tbody>
-</table>
-
-
+    <div className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              {columns.map((col, idx) => {
+                const isSorted = sortConfig.key === (col.accessorKey || col.id);
+                const canSort = col.sortable !== false && (col.accessorKey || col.id);
+                
+                return (
+                  <th
+                    key={String(col.id || col.accessorKey || idx)}
+                    scope="col"
+                    className={`
+                      px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                      ${canSort ? "cursor-pointer hover:bg-gray-100" : ""}
+                      ${col.align === "center" ? "text-center" : ""}
+                      ${col.align === "right" ? "text-right" : ""}
+                    `}
+                    onClick={() => canSort && requestSort(col.accessorKey || col.id || "")}
+                  >
+                    <div className={`flex items-center ${col.align === "center" ? "justify-center" : col.align === "right" ? "justify-end" : ""}`}>
+                      {col.header}
+                      {isSorted && (
+                        <span className="ml-1">
+                          {sortConfig.direction === "asc" ? (
+                            <ArrowUp className="h-3 w-3" />
+                          ) : (
+                            <ArrowDown className="h-3 w-3" />
+                          )}
+                        </span>
+                      )}
+                    </div>
+                  </th>
+                );
+              })}
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200 bg-white">
+            {loading ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-6 text-center">
+                  <div className="flex justify-center items-center space-x-2 text-gray-500">
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    <span>Cargando datos...</span>
+                  </div>
+                </td>
+              </tr>
+            ) : sortedData.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length} className="px-4 py-8 text-center">
+                  <div className="text-gray-400">
+                    {typeof emptyText === "string" ? (
+                      <p>{emptyText}</p>
+                    ) : (
+                      emptyText
+                    )}
+                  </div>
+                </td>
+              </tr>
+            ) : (
+              sortedData.map((row, rowIdx) => (
+                <tr
+                  key={row.id || rowIdx}
+                  className={`
+                    transition-colors duration-100
+                    ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
+                    ${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                  `}
+                  onClick={() => onRowClick && onRowClick(row)}
+                >
+                  {columns.map((col, colIdx) => (
+                    <td
+                      key={String(col.id || col.accessorKey || colIdx)}
+                      className={`
+                        px-4 py-3 whitespace-nowrap
+                        ${col.align === "center" ? "text-center" : ""}
+                        ${col.align === "right" ? "text-right" : ""}
+                        text-sm text-gray-800
+                      `}
+                    >
+                      {col.cell
+                        ? col.cell({
+                            row: { original: row },
+                            cell: {
+                              getValue: () =>
+                                col.accessorKey ? row[col.accessorKey] : undefined,
+                            },
+                          })
+                        : col.accessorKey
+                        ? (row as any)[col.accessorKey]
+                        : null}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

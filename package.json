@@ -16,6 +16,7 @@
     "@mui/material": "^7.1.0",
     "@supabase/supabase-js": "^2.39.8",
     "chart.js": "^4.4.2",
+    "compressorjs": "^1.2.1",
     "date-fns": "^3.6.0",
     "file-saver": "^2.0.5",
     "firebase": "^11.7.1",

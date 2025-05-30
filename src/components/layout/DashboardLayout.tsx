@@ -17,8 +17,6 @@ import {
   ChevronDown,
   ChevronUp,
   Home,
-  Calendar,
-  FileText,
   Bell,
 } from "lucide-react"
 import { useAuthStore } from "../../store/authStore"
@@ -231,6 +229,7 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
         <>
           <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Usuarios" />
           <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
+            <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
         </>
       )}
       {isFamiliar && <NavItem to="/mi-familiar" icon={<UserIcon />} label="Mi Familiar" />}
@@ -311,6 +310,7 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
                 <NavItem to="/pacientes" icon={<Users />} label="Pacientes" />
                 <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Familiares" />
                 <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
+                <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
               </>
             )}
 

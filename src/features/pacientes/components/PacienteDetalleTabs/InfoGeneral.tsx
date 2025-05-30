@@ -19,31 +19,7 @@ const InfoGeneral = ({ paciente }: { paciente: Paciente }) => {
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-      {/* Cabecera compacta */}
-      <div className="bg-gradient-to-r from-blue-50 to-white px-4 py-3 border-b border-gray-200 flex items-start gap-3">
-        <div className="bg-blue-100 p-2 rounded-lg">
-          <User size={20} className="text-blue-600" />
-        </div>
-        <div className="flex-1">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h2 className="text-lg font-medium text-gray-800 truncate max-w-[70%]">
-              {paciente.nombre_completo}
-            </h2>
-            <div className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              paciente.estado === "activo" 
-                ? "bg-green-100 text-green-800" 
-                : "bg-gray-100 text-gray-800"
-            }`}>
-              {paciente.estado}
-            </div>
-          </div>
-          <p className="text-gray-500 mt-1 text-xs flex items-center">
-            <span className="bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full">
-              ID: {paciente.id}
-            </span>
-          </p>
-        </div>
-      </div>
+    
 
       {/* Grid de información compacta */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-3 p-4">

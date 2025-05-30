@@ -8,11 +8,14 @@ import FormulaTab from "./components/PacienteDetalleTabs/FormulaTab";
 import NovedadesTab from "./components/PacienteDetalleTabs/NovedadesTab";
 import { Paciente } from "./types/paciente";
 import { Button } from "../../components/ui/Button";
-import { User, ArrowLeft, Camera } from "lucide-react";
+import { User, ArrowLeft } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { format } from 'date-fns';
 import es from 'date-fns/locale/es';
+
+import imagenEjemplo from "./ejemplo1.jpg"
+
 
 const PacienteDetallePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -122,12 +125,17 @@ const PacienteDetallePage: React.FC = () => {
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
                 {paciente.imagen_url ? (
                   <img
-                    src={paciente.imagen_url}
+                    src={imagenEjemplo}
                     alt={paciente.nombre_completo}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  <User size={64} className="text-blue-600" />
+                  /*<User size={64} className="text-blue-600" />*/
+                  <img
+                    src={imagenEjemplo}
+                    alt={paciente.nombre_completo}
+                    className="w-full h-full object-cover"
+                  />
                 )}
               </div>
             

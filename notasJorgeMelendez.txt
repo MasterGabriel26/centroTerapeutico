@@ -1,0 +1,2 @@
+Debe evaluar la fecha el hasta para marcar y cambiar el estado del periodo en la tabla paciente
+en la tabla debe haber el periodo hasta visible si hay muchaos periodos entonces debe actuializar en paciente y matricula

@@ -231,6 +231,8 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
         <>
           <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Usuarios" />
           <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
+          <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
+            <NavItem to="cuentasDeCobro" icon={<ClipboardList size={20} />} label="Cuentas de cobro" />
         </>
       )}
       {isFamiliar && <NavItem to="/mi-familiar" icon={<UserIcon />} label="Mi Familiar" />}
@@ -241,7 +243,7 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
   {/* Footer del Sidebar */}
   <div className="px-4 py-4 border-t border-gray-200 mt-auto">
     <Button 
-      variant="ghost" 
+      variant="outline" 
       size="sm" 
       fullWidth 
       onClick={handleLogout} 

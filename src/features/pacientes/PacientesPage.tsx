@@ -6,22 +6,18 @@ import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import { Dialog } from "../../components/ui/Dialog";
 import PacienteForm from "./components/PacienteForm";
-
+import { Link } from "react-router-dom"; // Importar Link
 import { db } from "../../utils/firebase";
 import { collection, addDoc, getDocs } from "firebase/firestore";
 import DataTable from "../../components/ui/DataTable";
-import PacienteDrawerView from "../../components/drawers/PacienteDrawer";
 import { Paciente } from "./types/paciente"; // Asegúrate de que este tipo de Paciente sea correcto
 import { Column } from "../../components/ui/DataTable";
 import CrearPacienteDialog from "./components/CrearPacienteDialog";
 import { getPacientes } from "./services/pacienteService"; // Ajusta la ruta si estás en otro nivel
-import PacienteDetalleDialog from "./components/PacienteDetalleDialog";
 
 const PacientesList: React.FC = () => {
     const [showNewDialog, setShowNewDialog] = useState(false);
-    const [drawerOpen, setDrawerOpen] = useState(false);
-    const [pacienteDrawer, setPacienteDrawer] = useState<Paciente | null>(null);
-    const [searchQuery, setSearchQuery] = useState<string>("");
+      const [searchQuery, setSearchQuery] = useState<string>("");
     const [pacientes, setPacientes] = useState<Paciente[]>([]);
     const [loading, setLoading] = useState<boolean>(false);
     const [filterEstado, setFilterEstado] = useState<"todos" | "activo" | "inactivo">("todos");
@@ -101,20 +97,16 @@ const PacientesList: React.FC = () => {
             header: "Options",
             id: "actions",
             cell: ({ row }: any) => (
-                <div className="flex justify-center">
-                    <Button
-                        variant="outlinePrimary"
-                        size="sm"
-                        onClick={() => {
-                            setPacienteDrawer(row.original);
-                            setDrawerOpen(true);
-                        }}
-                    >
-                        Detalle
-                    </Button>
-
-
-
+               <div className="flex justify-center">
+                    {/* Cambiar a Link para navegar a la nueva página */}
+                    <Link to={`/pacientes/${row.original.id}`}>
+                        <Button
+                            variant="outlinePrimary"
+                            size="sm"
+                        >
+                            Detalle
+                        </Button>
+                    </Link>
                 </div>
             ),
         }
@@ -172,12 +164,7 @@ const PacientesList: React.FC = () => {
                 emptyText="No hay pacientes registrados"
             />
 
-            <PacienteDetalleDialog
-                open={drawerOpen}
-                onClose={() => setDrawerOpen(false)}
-                paciente={pacienteDrawer}
-            />
-
+        
 
 
             <CrearPacienteDialog

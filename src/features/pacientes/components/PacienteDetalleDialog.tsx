@@ -6,6 +6,8 @@ import ImagenesTab from "./PacienteDetalleTabs/ImagenesTab";
 import FormulaTab from "./PacienteDetalleTabs/FormulaTab";
 import NovedadesTab from "./PacienteDetalleTabs/NovedadesTab";
 import { Paciente } from "../types/paciente";
+import { Button } from "../../../components/ui/Button";
+import { X, User } from "lucide-react";
 
 interface Props {
   open: boolean;
@@ -17,44 +19,119 @@ const PacienteDetalleDialog: React.FC<Props> = ({ open, onClose, paciente }) => 
   const [tabIndex, setTabIndex] = useState(0);
 
   if (!open || !paciente) return null;
-  console.log("PacienteDetalleDialogs:", paciente);
+
   return (
-    <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center font-poppins">
-      <div className="bg-white rounded-xl shadow-xl w-full max-w-4xl min-h-[600px] flex flex-col overflow-hidden relative">
+    <div
+      className={`fixed inset-0 z-50 flex items-center justify-center p-4 ${
+        open ? "opacity-100" : "opacity-0 pointer-events-none"
+      } transition-opacity duration-300`}
+    >
+      {/* Overlay */}
+      <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={onClose}></div>
 
-        {/* Botón cerrar (posición absoluta) */}
-        <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-100 bg-black/30 hover:bg-black/50 p-1.5 rounded-full text-lg z-10"
-          title="Cerrar"
-        >
-          &times;
-        </button>
-
-        {/* Header superior con color */}
-
-        <img
-          src="https://upload.wikimedia.org/wikipedia/commons/9/99/Flag_of_Peru_%281884%E2%80%931950%29.svg"
-          alt="Foto perfil"
-          className="w-24 h-24  border-4 border-white shadow-md object-cover mt-10 ml-10"
-        />
-        {/* Nombre y correo */}
-        <div className="mt-5 text-center px-4">
-          <h2 className="text-xl font-semibold text-gray-800">{paciente.nombre_completo}</h2>
-          <p className="text-sm text-gray-500">{paciente.email}</p>
+      {/* Modal */}
+      <div
+        className={`bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[90vh] overflow-hidden transform ${
+          open ? "scale-100" : "scale-95"
+        } transition-transform duration-300 flex flex-col`}
+      >
+        {/* Header */}
+        <div className="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6 flex justify-between items-center">
+          <div className="flex items-center gap-4">
+            <div className="relative">
+              <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center overflow-hidden border-2 border-white shadow-lg">
+                {paciente.imagen_url ? (
+                  <img
+                    src={paciente.imagen_url}
+                    alt={paciente.nombre_completo}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <User size={24} className="text-white" />
+                )}
+              </div>
+            </div>
+            <div>
+              <h2 className="text-2xl font-semibold tracking-tight text-white">{paciente.nombre_completo}</h2>
+              <div className="flex items-center gap-2 mt-1">
+                <span className="text-xs text-blue-100 opacity-80 font-medium">ID: {paciente.id}</span>
+                <span
+                  className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                    paciente.estado === "activo" ? "bg-blue-200 text-blue-900" : "bg-gray-200 text-gray-800"
+                  }`}
+                >
+                  {paciente.estado}
+                </span>
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-full hover:bg-white/20 transition-colors"
+            aria-label="Cerrar"
+          >
+            <X size={20} className="text-white" />
+          </button>
         </div>
 
-        {/* Tabs + contenido */}
-        <div className="flex-1 overflow-y-auto px-6 pt-6 pb-8">
-          <Tabs selectedIndex={tabIndex} onSelect={setTabIndex}>
-            <TabList selectedIndex={tabIndex} onSelect={setTabIndex}>
-              <Tab>Información</Tab>
-              <Tab>Familiares</Tab>
-              <Tab>Fotografías</Tab>
-              <Tab>Receta médica</Tab>
-              <Tab>Novedades</Tab>
-            </TabList>
+        {/* Tabs Navigation */}
+        <div className="border-b border-gray-100 px-6 bg-gray-50">
+          <TabList 
+            selectedIndex={tabIndex} 
+            onSelect={setTabIndex}
+            className="flex space-x-8 overflow-x-auto hide-scrollbar"
+          >
+            <Tab 
+              className={`py-4 px-2 flex items-center gap-2 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
+                tabIndex === 0
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+              }`}
+            >
+              Información
+            </Tab>
+            <Tab 
+              className={`py-4 px-2 flex items-center gap-2 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
+                tabIndex === 1
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+              }`}
+            >
+              Familiares
+            </Tab>
+            <Tab 
+              className={`py-4 px-2 flex items-center gap-2 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
+                tabIndex === 2
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+              }`}
+            >
+              Fotografías
+            </Tab>
+            <Tab 
+              className={`py-4 px-2 flex items-center gap-2 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
+                tabIndex === 3
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+              }`}
+            >
+              Receta médica
+            </Tab>
+            <Tab 
+              className={`py-4 px-2 flex items-center gap-2 text-sm font-medium border-b-2 whitespace-nowrap transition-all ${
+                tabIndex === 4
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+              }`}
+            >
+              Novedades
+            </Tab>
+          </TabList>
+        </div>
 
+        {/* Tab Content */}
+        <div className="flex-1 overflow-y-auto p-6">
+          <Tabs selectedIndex={tabIndex} onSelect={setTabIndex}>
             <TabPanel>
               <InfoGeneral paciente={paciente} />
             </TabPanel>
@@ -71,7 +148,17 @@ const PacienteDetalleDialog: React.FC<Props> = ({ open, onClose, paciente }) => 
               <NovedadesTab pacienteId={paciente.id!} />
             </TabPanel>
           </Tabs>
+        </div>
 
+        {/* Footer */}
+        <div className="border-t border-gray-100 p-4 flex justify-end items-center bg-gray-50">
+          <Button 
+            variant="outline" 
+            onClick={onClose} 
+            className="border-gray-200"
+          >
+            Cerrar
+          </Button>
         </div>
       </div>
     </div>

@@ -1,25 +1,32 @@
-import { collection, getDocs } from "firebase/firestore";
+import { collection, getDocs,addDoc } from "firebase/firestore";
+
 import { db } from "../../../utils/firebase";
+import { CuentaCobro } from "../types/cuenta_cobro";
 
-export async function fetchCuentaCobro() {
-  const snapshot = await getDocs(collection(db, "pagos"));
-  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-}
+export const getCuentasDeCobro = async (): Promise<CuentaCobro[]> => {
+  const snapshot = await getDocs(collection(db, "cuentasDeCobro"));
+  return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as CuentaCobro));
+};
 
-export async function fetchPacientes(): Promise<{ [key: string]: string }> {
-  const snapshot = await getDocs(collection(db, "pacientes"));
+export const getPacientesMap = async (): Promise<{ [id: string]: string }> => {
+  const snap = await getDocs(collection(db, "pacientes"));
   const map: { [key: string]: string } = {};
-  snapshot.forEach((doc) => {
+  snap.forEach((doc) => {
     map[doc.id] = doc.data().nombre_completo;
   });
   return map;
-}
+};
 
-export async function fetchUsuarios(): Promise<{ [key: string]: string }> {
-  const snapshot = await getDocs(collection(db, "users"));
+export const getUsuariosMap = async (): Promise<{ [id: string]: string }> => {
+  const snap = await getDocs(collection(db, "users"));
   const map: { [key: string]: string } = {};
-  snapshot.forEach((doc) => {
+  snap.forEach((doc) => {
     map[doc.id] = doc.data().nombre_completo;
   });
   return map;
-}
+};
+
+export const addCuentaDeCobro = async (cuenta: Omit<CuentaCobro, "id">) => {
+  const docRef = await addDoc(collection(db, "cuentasDeCobro"), cuenta);
+  return docRef.id;
+};

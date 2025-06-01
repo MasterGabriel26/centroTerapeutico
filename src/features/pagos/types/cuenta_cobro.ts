@@ -4,7 +4,7 @@ export interface CuentaCobro {
   fecha: string; // fecha de creación o emisión
   monto: number;
   metodo_pago?: string;
-  estado: "generado" | "pendiente" | "completado" | "anulado";
+  estado: "generado" | "enviada" | "pagada" | "anulado" | "rechazada";
   periodo: {
     desde: string; // ej. "2025-05-10"
     hasta: string; // ej. "2025-05-17"

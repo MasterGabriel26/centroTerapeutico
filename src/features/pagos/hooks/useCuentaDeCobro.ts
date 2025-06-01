@@ -1,43 +1,29 @@
-import { useEffect, useState } from "react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../../utils/firebase";
+import { useEffect, useState, useCallback } from "react";
+import { getCuentasDeCobro, getPacientesMap, getUsuariosMap } from "../services/cuentaCobroService";
+import { CuentaCobro } from "../types/cuenta_cobro";
 
 export function useCuentaDeCobro() {
-  const [pagos, setPagos] = useState<any[]>([]);
-  const [pacientes, setPacientes] = useState<{ [key: string]: string }>({});
-  const [familiares, setFamiliares] = useState<{ [key: string]: string }>({});
+  const [cuentas, setCuentas] = useState<CuentaCobro[]>([]);
   const [usuarios, setUsuarios] = useState<{ [key: string]: string }>({});
+  const [pacientes, setPacientes] = useState<{ [key: string]: string }>({});
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const pagosSnap = await getDocs(collection(db, "cuentaCobro"));
-      const pacientesSnap = await getDocs(collection(db, "pacientes"));
-      const usersSnap = await getDocs(collection(db, "users"));
-
-      const pagosData = pagosSnap.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
-
-      const usuariosMap: { [id: string]: string } = {};
-      const pacientesMap: { [id: string]: string } = {};
-      const familiaresMap: { [id: string]: string } = {};
-
-      usersSnap.forEach((doc) => {
-        const data = doc.data();
-        usuariosMap[doc.id] = data.nombre_completo;
-        familiaresMap[doc.id] = data.nombre_completo;
-      });
-
-      pacientesSnap.forEach((doc) => {
-        pacientesMap[doc.id] = doc.data().nombre_completo;
-      });
-
-      setPagos(pagosData);
-      setUsuarios(usuariosMap);
-      setPacientes(pacientesMap);
-      setFamiliares(familiaresMap);
-    };
-
-    fetchData();
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    const [cuentasList, pacientesMap, usuariosMap] = await Promise.all([
+      getCuentasDeCobro(),
+      getPacientesMap(),
+      getUsuariosMap(),
+    ]);
+    setCuentas(cuentasList);
+    setPacientes(pacientesMap);
+    setUsuarios(usuariosMap);
+    setLoading(false);
   }, []);
 
-  return { pagos, pacientes, familiares, usuarios };
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  return { cuentas, pacientes, usuarios, loading, refetch: fetchData };
 }

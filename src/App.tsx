@@ -8,6 +8,7 @@ import DashboardLayout from './components/layout/DashboardLayout';
 
 // Auth Pages
 import LoginForm from './components/auth/LoginForm';
+import PacienteDetallePage from './features/pacientes/DetallePacientePage';
 
 // Dashboard Pages
 import Dashboard from './pages/Dashboard';
@@ -89,6 +90,8 @@ const App: React.FC = () => {
         <Route path="pagos" element={<Pagos />} />
         <Route path="mi-familiar" element={<FamiliarView />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
+
       </Route>
     </Routes>
   );

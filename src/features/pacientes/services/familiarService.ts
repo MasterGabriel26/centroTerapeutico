@@ -8,6 +8,8 @@ export const addFamiliar = async (pacienteId: string, data: Familiar) => {
   return docRef.id;
 };
 
+
+
 export const getFamiliares = async (pacienteId: string): Promise<Familiar[]> => {
   const snapshot = await getDocs(collection(db, `pacientes/${pacienteId}/familiares`));
   return snapshot.docs.map(doc => ({

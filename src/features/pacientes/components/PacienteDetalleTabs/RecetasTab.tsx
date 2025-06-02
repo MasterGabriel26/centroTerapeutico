@@ -1,22 +1,26 @@
-// features/pacientes/components/PacienteDetalleTabs/RecetasTab.tsx
 import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, X, Pill } from "lucide-react";
+import { Plus, Trash2, Pill, User, Loader2, Eye, ChevronDown, ChevronUp } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import { useRecetas } from "../../hooks/useRecetas";
 import { Receta, Medicamento } from "../../types/receta";
+import { useAuthStore } from "../../../../store/authStore";
+import { getDoc, doc } from "firebase/firestore";
+import { db } from "../../../../utils/firebase";
 
 const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
+  const { usuario: doctor } = useAuthStore();
+  
   const { 
     recetas, 
     loading, 
     error, 
     cargarRecetas, 
-    crearReceta 
+    crearReceta,
+    eliminarReceta
   } = useRecetas(pacienteId);
   
   const [openModal, setOpenModal] = useState(false);
-  const [idDoctor, setIdDoctor] = useState("");
   const [motivo, setMotivo] = useState("");
   const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
   const [currentMedicamento, setCurrentMedicamento] = useState<Medicamento>({ nombre: "", posologia: "" });
@@ -24,6 +28,9 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
   const [formError, setFormError] = useState<string | null>(null);
   const [initialLoad, setInitialLoad] = useState(true);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [detalleReceta, setDetalleReceta] = useState<Receta | null>(null);
+  const [doctoresInfo, setDoctoresInfo] = useState<Record<string, string>>({});
+  const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
 
   // Cargar recetas al montar el componente
   useEffect(() => {
@@ -32,8 +39,39 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     }
   }, [cargarRecetas, initialLoad]);
 
+  // Cargar información de doctores
+  useEffect(() => {
+    const loadDoctorInfo = async () => {
+      const doctorIds = Array.from(new Set(recetas.map(r => r.idDoctor)));
+      const info: Record<string, string> = {};
+      
+      for (const id of doctorIds) {
+        if (!doctoresInfo[id]) {
+          try {
+            const docRef = doc(db, "users", id);
+            const docSnap = await getDoc(docRef);
+            
+            if (docSnap.exists()) {
+              info[id] = docSnap.data().nombre_completo || "Médico desconocido";
+            } else {
+              info[id] = "Médico no encontrado";
+            }
+          } catch (error) {
+            console.error("Error cargando información del médico:", error);
+            info[id] = "Error al cargar";
+          }
+        }
+      }
+      
+      setDoctoresInfo(prev => ({ ...prev, ...info }));
+    };
+    
+    if (recetas.length > 0) {
+      loadDoctorInfo();
+    }
+  }, [recetas]);
+
   const resetForm = () => {
-    setIdDoctor("");
     setMotivo("");
     setMedicamentos([]);
     setCurrentMedicamento({ nombre: "", posologia: "" });
@@ -47,7 +85,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     }
     
     setMedicamentos([...medicamentos, currentMedicamento]);
-    setCurrentMedicamento({ nombre: "", posologia: "" }); // Reset current
+    setCurrentMedicamento({ nombre: "", posologia: "" });
     setFormError(null);
   };
 
@@ -58,8 +96,13 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
   };
 
   const handleSubmit = async () => {
-    if (!idDoctor.trim() || !motivo.trim()) {
-      setFormError("Por favor, complete los campos obligatorios");
+    if (!doctor?.id) {
+      setFormError("No se pudo identificar al médico. Por favor, inicie sesión nuevamente.");
+      return;
+    }
+    
+    if (!motivo.trim()) {
+      setFormError("Por favor, indique el motivo de la receta");
       return;
     }
     
@@ -72,10 +115,14 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     setFormError(null);
     
     try {
-      await crearReceta({ idDoctor, motivo, medicamentos });
+      await crearReceta({ 
+        idDoctor: doctor.id, 
+        motivo, 
+        medicamentos 
+      });
       setOpenModal(false);
       resetForm();
-      setInitialLoad(true); // Forzar recarga de recetas
+      setInitialLoad(true);
     } catch (err) {
       setFormError("Error al crear la receta. Por favor, intente de nuevo.");
     } finally {
@@ -90,6 +137,25 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
       month: 'short',
       year: 'numeric'
     });
+  };
+
+  const toggleRowExpand = (id: string) => {
+    setExpandedRows(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleDeleteReceta = async () => {
+    if (!deletingId) return;
+    
+    try {
+      await eliminarReceta(deletingId);
+      setDeletingId(null);
+      setInitialLoad(true); // Forzar recarga de recetas
+    } catch (error) {
+      console.error("Error eliminando receta:", error);
+    }
   };
 
   return (
@@ -127,25 +193,24 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
       >
         <div className="p-4 space-y-4">
           {formError && (
-            <div className="bg-red-50 text-red-700 p-3 rounded-lg">
+            <div className="bg-red-50 text-red-700 p-3 rounded-lg text-sm">
               {formError}
             </div>
           )}
 
-          <div>
-            <label htmlFor="idDoctor" className="block text-sm font-medium text-gray-700 mb-1">
-              ID del médico *
-            </label>
-            <input
-              type="text"
-              id="idDoctor"
-              value={idDoctor}
-              onChange={(e) => setIdDoctor(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="Ej: DR-1234"
-            />
+          {/* Información del médico */}
+          <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+            <h3 className="font-medium text-blue-800 text-sm mb-1">Médico responsable</h3>
+            <div className="flex items-center gap-2">
+              <User className="text-blue-500" size={16} />
+              <div>
+                <p className="font-medium">{doctor?.nombre_completo || "No disponible"}</p>
+                <p className="text-xs text-gray-600">ID: {doctor?.id || "No disponible"}</p>
+              </div>
+            </div>
           </div>
 
+          {/* Campo motivo */}
           <div>
             <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-1">
               Motivo de la receta *
@@ -154,78 +219,99 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
               id="motivo"
               value={motivo}
               onChange={(e) => setMotivo(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
               placeholder="Ej: Infección respiratoria"
-              rows={3}
+              rows={2}
             />
           </div>
 
+          {/* Sección de medicamentos */}
           <div className="border-t pt-4 mt-4">
-            <h3 className="font-medium text-gray-700 mb-3">Medicamentos</h3>
+            <div className="flex justify-between items-center mb-3">
+              <h3 className="font-medium text-gray-700">Medicamentos</h3>
+              <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
+                {medicamentos.length} {medicamentos.length === 1 ? 'agregado' : 'agregados'}
+              </span>
+            </div>
             
-            {/* Lista de medicamentos agregados */}
+            {/* Lista de medicamentos en tabla */}
             {medicamentos.length > 0 && (
-              <div className="mb-4 space-y-2">
-                {medicamentos.map((med, index) => (
-                  <div key={index} className="flex justify-between items-center bg-gray-50 p-3 rounded-lg">
-                    <div>
-                      <p className="font-medium">{med.nombre}</p>
-                      <p className="text-sm text-gray-600">{med.posologia}</p>
-                    </div>
-                    <button
-                      type="button"
-                      className="text-red-600 hover:text-red-800"
-                      onClick={() => handleRemoveMedicamento(index)}
-                    >
-                      <Trash2 size={18} />
-                    </button>
-                  </div>
-                ))}
+              <div className="mb-4 border rounded-lg overflow-hidden">
+                <table className="w-full text-sm">
+                  <thead className="bg-gray-50">
+                    <tr>
+                      <th className="text-left py-2 px-3 font-medium">Medicamento</th>
+                      <th className="text-left py-2 px-3 font-medium">Posología</th>
+                      <th className="w-10"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {medicamentos.map((med, index) => (
+                      <tr key={index} className="border-t hover:bg-gray-50">
+                        <td className="py-2 px-3">{med.nombre}</td>
+                        <td className="py-2 px-3">{med.posologia}</td>
+                        <td className="py-2 px-3 text-center">
+                          <button
+                            type="button"
+                            className="text-red-500 hover:text-red-700"
+                            onClick={() => handleRemoveMedicamento(index)}
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
               </div>
             )}
 
             {/* Formulario para agregar medicamento */}
-            <div className="space-y-3">
-              <div>
-                <label htmlFor="medNombre" className="block text-sm font-medium text-gray-700 mb-1">
-                  Nombre del medicamento
-                </label>
-                <input
-                  type="text"
-                  id="medNombre"
-                  value={currentMedicamento.nombre}
-                  onChange={(e) => setCurrentMedicamento({...currentMedicamento, nombre: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ej: Amoxicilina"
-                />
-              </div>
+            <div className="space-y-3 bg-gray-50 p-3 rounded-lg">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="medNombre" className="block text-xs font-medium text-gray-600 mb-1">
+                    Nombre del medicamento *
+                  </label>
+                  <input
+                    type="text"
+                    id="medNombre"
+                    value={currentMedicamento.nombre}
+                    onChange={(e) => setCurrentMedicamento({...currentMedicamento, nombre: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    placeholder="Ej: Amoxicilina"
+                  />
+                </div>
 
-              <div>
-                <label htmlFor="medPosologia" className="block text-sm font-medium text-gray-700 mb-1">
-                  Posología
-                </label>
-                <input
-                  type="text"
-                  id="medPosologia"
-                  value={currentMedicamento.posologia}
-                  onChange={(e) => setCurrentMedicamento({...currentMedicamento, posologia: e.target.value})}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="Ej: 500mg cada 8 horas"
-                />
+                <div>
+                  <label htmlFor="medPosologia" className="block text-xs font-medium text-gray-600 mb-1">
+                    Posología *
+                  </label>
+                  <input
+                    type="text"
+                    id="medPosologia"
+                    value={currentMedicamento.posologia}
+                    onChange={(e) => setCurrentMedicamento({...currentMedicamento, posologia: e.target.value})}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    placeholder="Ej: 500mg cada 8 horas"
+                  />
+                </div>
               </div>
 
               <Button
                 type="button"
                 variant="secondary"
                 onClick={handleAddMedicamento}
-                className="w-full"
+                className="w-full py-2 text-sm flex items-center justify-center gap-2"
               >
+                <Plus size={14} />
                 Agregar medicamento
               </Button>
             </div>
           </div>
 
-          <div className="flex justify-end gap-3 pt-4">
+          {/* Botones de acción */}
+          <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
               variant="secondary"
               onClick={() => {
@@ -233,6 +319,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
                 resetForm();
               }}
               disabled={isSubmitting}
+              className="text-sm px-4 py-2"
             >
               Cancelar
             </Button>
@@ -240,8 +327,14 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
               variant="primary"
               onClick={handleSubmit}
               disabled={isSubmitting || medicamentos.length === 0}
+              className="text-sm px-4 py-2"
             >
-              {isSubmitting ? 'Creando...' : 'Crear Receta'}
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <Loader2 className="animate-spin" size={16} />
+                  Creando...
+                </span>
+              ) : 'Crear Receta'}
             </Button>
           </div>
         </div>
@@ -279,57 +372,163 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
             </div>
           )}
 
-          {/* Lista de recetas */}
-          {!initialLoad && recetas.length > 0 && (
-            <div className="space-y-4 mt-4">
-              {recetas.map((receta) => (
-                <div 
-                  key={receta.id} 
-                  className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden"
-                >
-                  <div className="p-4 bg-blue-50 border-b border-blue-100">
-                    <div className="flex justify-between">
-                      <h3 className="font-medium text-blue-800">Receta médica</h3>
-                      <span className="text-sm text-blue-600">
-                        {formatDate(receta.fecha)}
-                      </span>
+       {/* Tabla de recetas */}
+{!initialLoad && recetas.length > 0 && (
+  <div className="mt-6 overflow-x-auto border border-gray-200 rounded-lg">
+    <table className="min-w-full divide-y divide-gray-200">
+      <thead className="bg-gray-50">
+        <tr>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Fecha
+          </th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Médico
+          </th>
+          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Medicamentos
+          </th>
+          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+            Acciones
+          </th>
+        </tr>
+      </thead>
+      <tbody className="bg-white divide-y divide-gray-200">
+        {recetas.map((receta) => {
+          // Crear una lista de nombres de medicamentos truncada
+          const medicamentosLista = receta.medicamentos.map(m => m.nombre);
+          const medicamentosTexto = medicamentosLista.join(', ');
+          const medicamentosPreview = medicamentosTexto.length > 50 
+            ? medicamentosTexto.substring(0, 47) + '...' 
+            : medicamentosTexto;
+            
+          return (
+            <>
+              <tr key={receta.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleRowExpand(receta.id!)}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                  {formatDate(receta.fecha)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                  {doctoresInfo[receta.idDoctor] || "Cargando..."}
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                  <div className="group relative">
+                    <div className="truncate max-w-[300px]">
+                      {medicamentosPreview}
                     </div>
-                    <p className="text-sm text-gray-600 mt-1">Médico: {receta.idDoctor}</p>
+                    {medicamentosTexto.length > 50 && (
+                      <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 z-10">
+                        {medicamentosTexto}
+                      </div>
+                    )}
                   </div>
-                  
-                  <div className="p-4">
-                    <p className="text-gray-700 mb-3">
-                      <span className="font-medium">Motivo:</span> {receta.motivo}
-                    </p>
-                    
-                    <h4 className="font-medium text-gray-700 mb-2">Medicamentos:</h4>
-                    <ul className="space-y-2">
-                      {receta.medicamentos.map((med, index) => (
-                        <li key={index} className="flex justify-between items-start bg-gray-50 p-3 rounded-lg">
-                          <div>
-                            <p className="font-medium">{med.nombre}</p>
-                            <p className="text-sm text-gray-600">{med.posologia}</p>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                  
-                  <div className="px-4 py-3 bg-gray-50 border-t border-gray-100 flex justify-end">
-                    <button 
-                      className="text-red-600 hover:text-red-800 flex items-center text-sm"
-                      onClick={() => setDeletingId(receta.id!)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                  <div className="flex justify-end space-x-3">
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDetalleReceta(receta);
+                      }}
+                      className="text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
                     >
-                      <Trash2 size={16} className="mr-1" />
-                      Eliminar
+                      <Eye size={14} />
+                      Detalle
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setDeletingId(receta.id!);
+                      }}
+                      className="text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1"
+                    >
+                      <Trash2 size={14} />
+                    </Button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        toggleRowExpand(receta.id!);
+                      }}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      {expandedRows[receta.id!] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                     </button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                </td>
+              </tr>
+              {expandedRows[receta.id!] && (
+                <tr>
+                  <td colSpan={4} className="px-6 py-4 bg-gray-50">
+                    <div className="text-sm">
+                      <p className="font-medium text-gray-700 mb-2">Medicamentos completos:</p>
+                      <ul className="space-y-2">
+                        {receta.medicamentos.map((med, index) => (
+                          <li key={index} className="flex justify-between items-start bg-white p-3 rounded-lg border border-gray-200">
+                            <div>
+                              <p className="font-medium">{med.nombre}</p>
+                              <p className="text-sm text-gray-600">{med.posologia}</p>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </>
+          );
+        })}
+      </tbody>
+    </table>
+  </div>
+)}
+
         </>
       )}
+
+      {/* Modal de detalle de receta */}
+      <Dialog 
+        isOpen={!!detalleReceta} 
+        onClose={() => setDetalleReceta(null)} 
+        title="Detalle de receta médica"
+        size="lg"
+      >
+        {detalleReceta && (
+          <div className="p-4 space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Fecha</p>
+                <p className="font-medium">{formatDate(detalleReceta.fecha)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Médico</p>
+                <p className="font-medium">{doctoresInfo[detalleReceta.idDoctor] || "Cargando..."}</p>
+              </div>
+              <div className="md:col-span-2">
+                <p className="text-sm text-gray-500 mb-1">Motivo</p>
+                <p className="font-medium">{detalleReceta.motivo}</p>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="text-lg font-medium text-gray-900 mb-3">Medicamentos</h3>
+              <div className="space-y-3">
+                {detalleReceta.medicamentos.map((med, index) => (
+                  <div key={index} className="bg-gray-50 p-3 rounded-lg border border-gray-200">
+                    <div className="flex justify-between">
+                      <div>
+                        <p className="font-medium">{med.nombre}</p>
+                        <p className="text-sm text-gray-600">{med.posologia}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </Dialog>
 
       {/* Modal de confirmación para eliminar */}
       <Dialog 
@@ -346,8 +545,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
             <Button 
               variant="danger" 
               onClick={() => {
-                // Aquí iría la lógica para eliminar la receta
-                console.log("Eliminar receta:", deletingId);
+                handleDeleteReceta();
                 setDeletingId(null);
               }}
             >

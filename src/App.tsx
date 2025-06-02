@@ -17,6 +17,7 @@ import RegistroDiario from './pages/Gastos';
 import Pagos from './pages/Pagos';
 import FamiliarView from './pages/FamiliarView';
 import PacientesList from '../src/features/pacientes/PacientesPage'; // Asegúrate de que la ruta sea correcta
+import PagosPage from '../src/features/pagos/PagosPage';
 // Logo para preloader
 import { Activity } from 'lucide-react';
 import Familiares from './pages/Usuarios';
@@ -83,6 +84,7 @@ const App: React.FC = () => {
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="pacientes" element={<Pacientes />} />
            <Route path="pacientesList" element={<PacientesList />} />
+           <Route path="cuentasDeCobro" element={<PagosPage/>} />
         <Route path="familiares" element={<Familiares />} />
         <Route path="gastos" element={<Gastos />} />
         <Route path="pagos" element={<Pagos />} />

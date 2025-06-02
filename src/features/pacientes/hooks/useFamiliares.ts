@@ -24,4 +24,4 @@ export const useFamiliares = (pacienteId: string) => {
     cargarFamiliares,
     crearFamiliar,
   };
-};
+}; 

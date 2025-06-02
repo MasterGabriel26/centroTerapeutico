@@ -8,4 +8,6 @@ export interface Receta {
     idDoctor: string;
     motivo: string;
     medicamentos: Medicamento[]; 
+    fecha?:Date;
+    isActive:boolean;
 }

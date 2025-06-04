@@ -9,7 +9,7 @@ export const getAuditoriasCuentaCobro = async (
   pacienteId: string,
   cuentaCobroId: string
 ): Promise<AuditoriaCuentaCobro[]> => {
-  const auditoriaRef = collection(db, "auditoria_cuentas_cobro", pacienteId, cuentaCobroId);
+  const auditoriaRef = collection(db, "auditoria_cuentas_cobro", cuentaCobroId, "cambios"); // ✅ FIX aquí
   const q = query(auditoriaRef, orderBy("fecha", "asc"));
   const snapshot = await getDocs(q);
 
@@ -18,6 +18,7 @@ export const getAuditoriasCuentaCobro = async (
     ...doc.data(),
   } as AuditoriaCuentaCobro));
 };
+
 
 export const addAuditoriaCuentaCobro = async (
   cuentaCobroId: string,

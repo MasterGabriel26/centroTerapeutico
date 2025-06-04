@@ -38,7 +38,7 @@ export const addCuentaDeCobro = async (cuenta: Omit<CuentaCobro, "id">) => {
     const usuarioId = auth.currentUser?.uid;
     if (usuarioId) {
       await registrarAuditoriaCuenta({
-        pacienteId: cuenta.paciente_id,
+        //pacienteId: cuenta.paciente_id,
         cuentaId: docRef.id,
         usuarioId,
         accion: "creado",
@@ -72,7 +72,7 @@ export const actualizarEstadoCuentaDeCobro = async (
   await updateDoc(cuentaRef, { estado: nuevoEstado });
 
   await registrarAuditoriaCuenta({
-    pacienteId,
+    //pacienteId,
     cuentaId,
     usuarioId,
     accion: nuevoEstado as any,

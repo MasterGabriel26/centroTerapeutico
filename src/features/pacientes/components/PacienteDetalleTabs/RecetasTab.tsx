@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Trash2, Pill, User, Loader2, Eye, ChevronDown, ChevronUp } from "lucide-react";
+import { useState, useEffect, useMemo } from "react";
+import { Plus, Trash2, Pill, User, Loader2, Eye, ChevronDown, ChevronUp, Search, RefreshCw } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import { useRecetas } from "../../hooks/useRecetas";
@@ -17,7 +17,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     error, 
     cargarRecetas, 
     crearReceta,
-    eliminarReceta
+    actualizarReceta // Nueva función para actualizar
   } = useRecetas(pacienteId);
   
   const [openModal, setOpenModal] = useState(false);
@@ -31,6 +31,10 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
   const [detalleReceta, setDetalleReceta] = useState<Receta | null>(null);
   const [doctoresInfo, setDoctoresInfo] = useState<Record<string, string>>({});
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
+  
+  // Nuevos estados para búsqueda y filtros
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("active");
 
   // Cargar recetas al montar el componente
   useEffect(() => {
@@ -70,6 +74,30 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
       loadDoctorInfo();
     }
   }, [recetas]);
+
+  // Filtrar recetas según término de búsqueda y estado
+  const filteredRecetas = useMemo(() => {
+    return recetas.filter(receta => {
+      // Filtrar por estado
+      if (statusFilter === "active" && !receta.isActive) return false;
+      if (statusFilter === "inactive" && receta.isActive) return false;
+      
+      // Filtrar por término de búsqueda
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        const matchesMotivo = receta.motivo.toLowerCase().includes(term);
+        const matchesDoctor = (doctoresInfo[receta.idDoctor] || "").toLowerCase().includes(term);
+        const matchesMedicamento = receta.medicamentos.some(m => 
+          m.nombre.toLowerCase().includes(term) || 
+          m.posologia.toLowerCase().includes(term)
+        );
+        
+        return matchesMotivo || matchesDoctor || matchesMedicamento;
+      }
+      
+      return true;
+    });
+  }, [recetas, searchTerm, statusFilter, doctoresInfo]);
 
   const resetForm = () => {
     setMotivo("");
@@ -118,7 +146,8 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
       await crearReceta({ 
         idDoctor: doctor.id, 
         motivo, 
-        medicamentos 
+        medicamentos,
+        isActive: true 
       });
       setOpenModal(false);
       resetForm();
@@ -146,15 +175,12 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     }));
   };
 
-  const handleDeleteReceta = async () => {
-    if (!deletingId) return;
-    
+  const handleToggleRecetaStatus = async (id: string, isActive: boolean) => {
     try {
-      await eliminarReceta(deletingId);
-      setDeletingId(null);
+      await actualizarReceta(id, { isActive: !isActive });
       setInitialLoad(true); // Forzar recarga de recetas
     } catch (error) {
-      console.error("Error eliminando receta:", error);
+      console.error("Error actualizando receta:", error);
     }
   };
 
@@ -180,6 +206,33 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
         >
           Nueva Receta
         </Button>
+      </div>
+
+      {/* Nuevo: Barra de búsqueda y filtros */}
+      <div className="mb-6 flex flex-col sm:flex-row gap-4">
+        <div className="relative flex-1">
+          <input
+            type="text"
+            placeholder="Buscar recetas por motivo, médico o medicamento..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          />
+          <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
+        </div>
+        
+        <div className="flex gap-2 items-center">
+          <label className="text-sm text-gray-600 whitespace-nowrap">Estado:</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as any)}
+            className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+          >
+            <option value="active">Activas</option>
+            <option value="inactive">Eliminadas</option>
+            <option value="all">Todas</option>
+          </select>
+        </div>
       </div>
 
       {/* Modal para crear receta */}
@@ -213,7 +266,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
           {/* Campo motivo */}
           <div>
             <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-1">
-              Motivo de la receta *
+              Motivo de la receta 
             </label>
             <textarea
               id="motivo"
@@ -271,7 +324,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="medNombre" className="block text-xs font-medium text-gray-600 mb-1">
-                    Nombre del medicamento *
+                    Nombre del medicamento
                   </label>
                   <input
                     type="text"
@@ -285,7 +338,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
 
                 <div>
                   <label htmlFor="medPosologia" className="block text-xs font-medium text-gray-600 mb-1">
-                    Posología *
+                    Posología
                   </label>
                   <input
                     type="text"
@@ -355,135 +408,174 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
           )}
 
           {/* Mensaje cuando no hay recetas */}
-          {!initialLoad && recetas.length === 0 && (
+          {!initialLoad && filteredRecetas.length === 0 && (
             <div className="flex flex-col items-center justify-center py-12 border-2 border-dashed border-gray-300 rounded-xl bg-gray-50">
               <Pill className="text-gray-400" size={48} />
-              <h3 className="text-lg font-medium text-gray-600 mt-4">No hay recetas registradas</h3>
+              <h3 className="text-lg font-medium text-gray-600 mt-4">
+                {statusFilter === "active" 
+                  ? "No hay recetas activas" 
+                  : statusFilter === "inactive" 
+                    ? "No hay recetas eliminadas" 
+                    : "No hay recetas registradas"}
+              </h3>
               <p className="text-gray-500 text-sm mt-2">
-                Aún no se han creado recetas para este paciente
+                {statusFilter === "active" 
+                  ? "Crea una nueva receta para comenzar" 
+                  : "No se encontraron recetas con este estado"}
               </p>
               <Button
                 variant="primary"
                 onClick={() => setOpenModal(true)}
                 className="mt-4 bg-blue-600 hover:bg-blue-700 text-white"
               >
-                Crear primera receta
+                Crear nueva receta
               </Button>
             </div>
           )}
 
-       {/* Tabla de recetas */}
-{!initialLoad && recetas.length > 0 && (
-  <div className="mt-6 overflow-x-auto border border-gray-200 rounded-lg">
-    <table className="min-w-full divide-y divide-gray-200">
-      <thead className="bg-gray-50">
-        <tr>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Fecha
-          </th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Médico
-          </th>
-          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Medicamentos
-          </th>
-          <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-            Acciones
-          </th>
-        </tr>
-      </thead>
-      <tbody className="bg-white divide-y divide-gray-200">
-        {recetas.map((receta) => {
-          // Crear una lista de nombres de medicamentos truncada
-          const medicamentosLista = receta.medicamentos.map(m => m.nombre);
-          const medicamentosTexto = medicamentosLista.join(', ');
-          const medicamentosPreview = medicamentosTexto.length > 50 
-            ? medicamentosTexto.substring(0, 47) + '...' 
-            : medicamentosTexto;
-            
-          return (
-            <>
-              <tr key={receta.id} className="hover:bg-gray-50 cursor-pointer" onClick={() => toggleRowExpand(receta.id!)}>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {formatDate(receta.fecha)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {doctoresInfo[receta.idDoctor] || "Cargando..."}
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
-                  <div className="group relative">
-                    <div className="truncate max-w-[300px]">
-                      {medicamentosPreview}
-                    </div>
-                    {medicamentosTexto.length > 50 && (
-                      <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 z-10">
-                        {medicamentosTexto}
-                      </div>
-                    )}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
-                  <div className="flex justify-end space-x-3">
-                    <Button
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDetalleReceta(receta);
-                      }}
-                      className="text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
-                    >
-                      <Eye size={14} />
-                      Detalle
-                    </Button>
-                    <Button
-                      variant="outline"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setDeletingId(receta.id!);
-                      }}
-                      className="text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1"
-                    >
-                      <Trash2 size={14} />
-                    </Button>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        toggleRowExpand(receta.id!);
-                      }}
-                      className="text-gray-500 hover:text-gray-700"
-                    >
-                      {expandedRows[receta.id!] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                    </button>
-                  </div>
-                </td>
-              </tr>
-              {expandedRows[receta.id!] && (
-                <tr>
-                  <td colSpan={4} className="px-6 py-4 bg-gray-50">
-                    <div className="text-sm">
-                      <p className="font-medium text-gray-700 mb-2">Medicamentos completos:</p>
-                      <ul className="space-y-2">
-                        {receta.medicamentos.map((med, index) => (
-                          <li key={index} className="flex justify-between items-start bg-white p-3 rounded-lg border border-gray-200">
-                            <div>
-                              <p className="font-medium">{med.nombre}</p>
-                              <p className="text-sm text-gray-600">{med.posologia}</p>
+          {/* Tabla de recetas */}
+          {!initialLoad && filteredRecetas.length > 0 && (
+            <div className="mt-6 overflow-x-auto border border-gray-200 rounded-lg">
+              <table className="min-w-full divide-y divide-gray-200">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Fecha
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Médico
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Medicamentos
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Estado
+                    </th>
+                    <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                      Acciones
+                    </th>
+                  </tr>
+                </thead>
+                <tbody className="bg-white divide-y divide-gray-200">
+                  {filteredRecetas.map((receta) => {
+                    // Crear una lista de nombres de medicamentos truncada
+                    const medicamentosLista = receta.medicamentos.map(m => m.nombre);
+                    const medicamentosTexto = medicamentosLista.join(', ');
+                    const medicamentosPreview = medicamentosTexto.length > 50 
+                      ? medicamentosTexto.substring(0, 47) + '...' 
+                      : medicamentosTexto;
+                      
+                    return (
+                      <>
+                        <tr 
+                          key={receta.id} 
+                          className={`hover:bg-gray-50 cursor-pointer ${!receta.isActive ? 'bg-gray-100 text-gray-500' : ''}`} 
+                          onClick={() => toggleRowExpand(receta.id!)}
+                        >
+                          <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {formatDate(receta.fecha)}
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            {doctoresInfo[receta.idDoctor] || "Cargando..."}
+                          </td>
+                          <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                            <div className="group relative">
+                              <div className="truncate max-w-[300px]">
+                                {medicamentosPreview}
+                              </div>
+                              {medicamentosTexto.length > 50 && (
+                                <div className="absolute hidden group-hover:block bg-gray-800 text-white text-xs rounded p-2 z-10">
+                                  {medicamentosTexto}
+                                </div>
+                              )}
                             </div>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </td>
-                </tr>
-              )}
-            </>
-          );
-        })}
-      </tbody>
-    </table>
-  </div>
-)}
-
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+                              receta.isActive 
+                                ? 'bg-green-100 text-green-800' 
+                                : 'bg-red-100 text-red-800'
+                            }`}>
+                              {receta.isActive ? 'Activa' : 'Eliminada'}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-sm text-right">
+                            <div className="flex justify-end space-x-3">
+                              <Button
+                                variant="outline"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDetalleReceta(receta);
+                                }}
+                                className="text-blue-600 border-blue-200 hover:bg-blue-50 flex items-center gap-1"
+                              >
+                                <Eye size={14} />
+                                Detalle
+                              </Button>
+                              
+                              {receta.isActive ? (
+                                <Button
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeletingId(receta.id!);
+                                  }}
+                                  className="text-red-600 border-red-200 hover:bg-red-50 flex items-center gap-1"
+                                >
+                                  <Trash2 size={14} />
+                                </Button>
+                              ) : (
+                                <Button
+                                  variant="outline"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleToggleRecetaStatus(receta.id!, receta.isActive);
+                                  }}
+                                  className="text-green-600 border-green-200 hover:bg-green-50 flex items-center gap-1"
+                                >
+                                  <RefreshCw size={14} />
+                                  Restaurar
+                                </Button>
+                              )}
+                              
+                              <button 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleRowExpand(receta.id!);
+                                }}
+                                className="text-gray-500 hover:text-gray-700"
+                              >
+                                {expandedRows[receta.id!] ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                        {expandedRows[receta.id!] && (
+                          <tr>
+                            <td colSpan={5} className="px-6 py-4 bg-gray-50">
+                              <div className="text-sm">
+                                <p className="font-medium text-gray-700 mb-2">Medicamentos completos:</p>
+                                <ul className="space-y-2">
+                                  {receta.medicamentos.map((med, index) => (
+                                    <li key={index} className="flex justify-between items-start bg-white p-3 rounded-lg border border-gray-200">
+                                      <div>
+                                        <p className="font-medium">{med.nombre}</p>
+                                        <p className="text-sm text-gray-600">{med.posologia}</p>
+                                      </div>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </>
       )}
 
@@ -508,6 +600,14 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
               <div className="md:col-span-2">
                 <p className="text-sm text-gray-500 mb-1">Motivo</p>
                 <p className="font-medium">{detalleReceta.motivo}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1">Estado</p>
+                <p className={`font-medium ${
+                  detalleReceta.isActive ? 'text-green-600' : 'text-red-600'
+                }`}>
+                  {detalleReceta.isActive ? 'Activa' : 'Eliminada'}
+                </p>
               </div>
             </div>
 
@@ -537,16 +637,18 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
         title="Confirmar eliminación"
       >
         <div className="p-4">
-          <p className="text-gray-700 mb-4">¿Estás seguro de que deseas eliminar esta receta? Esta acción no se puede deshacer.</p>
+          <p className="text-gray-700 mb-4">¿Estás seguro de que deseas marcar esta receta como eliminada? La receta se ocultará del listado principal pero podrá ser recuperada.</p>
           <div className="flex justify-end gap-3">
             <Button variant="secondary" onClick={() => setDeletingId(null)}>
               Cancelar
             </Button>
             <Button 
               variant="danger" 
-              onClick={() => {
-                handleDeleteReceta();
-                setDeletingId(null);
+              onClick={async () => {
+                if (deletingId) {
+                  await handleToggleRecetaStatus(deletingId, true);
+                  setDeletingId(null);
+                }
               }}
             >
               Eliminar

@@ -3,7 +3,7 @@ import { Tabs, TabList, Tab, TabPanel } from "../../../components/ui/Tabs";
 import InfoGeneral from "./PacienteDetalleTabs/InfoGeneral";
 import FamiliaresTab from "./PacienteDetalleTabs/FamiliaresTab";
 import ImagenesTab from "./PacienteDetalleTabs/ImagenesTab";
-import FormulaTab from "./PacienteDetalleTabs/FormulaTab";
+import FormulaTab from "./PacienteDetalleTabs/RecetasTab";
 import NovedadesTab from "./PacienteDetalleTabs/NovedadesTab";
 import { Paciente } from "../types/paciente";
 import { Button } from "../../../components/ui/Button";

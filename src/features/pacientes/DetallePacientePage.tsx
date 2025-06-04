@@ -4,7 +4,7 @@ import { Tabs, TabList, Tab, TabPanel } from "../../components/ui/Tabs";
 import InfoGeneral from "./components/PacienteDetalleTabs/InfoGeneral";
 import FamiliaresTab from "./components/PacienteDetalleTabs/FamiliaresTab";
 import ImagenesTab from "./components/PacienteDetalleTabs/ImagenesTab";
-import FormulaTab from "./components/PacienteDetalleTabs/FormulaTab";
+import RecetasTab from "./components/PacienteDetalleTabs/RecetasTab";
 import NovedadesTab from "./components/PacienteDetalleTabs/NovedadesTab";
 import { Paciente } from "./types/paciente";
 import { Button } from "../../components/ui/Button";
@@ -257,7 +257,7 @@ const PacienteDetallePage: React.FC = () => {
                 <ImagenesTab pacienteId={paciente.id!} />
               </TabPanel>
               <TabPanel>
-                <FormulaTab pacienteId={paciente.id!} />
+                <RecetasTab pacienteId={paciente.id!} />
               </TabPanel>
               <TabPanel>
                 <NovedadesTab pacienteId={paciente.id!} />

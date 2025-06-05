@@ -1,183 +1,169 @@
 // src/features/pacientes/PacientesPage.tsx
-
 import React, { useState, useEffect } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
-import { Dialog } from "../../components/ui/Dialog";
-import PacienteForm from "./components/PacienteForm";
-import { Link } from "react-router-dom"; // Importar Link
-import { db } from "../../utils/firebase";
-import { collection, addDoc, getDocs } from "firebase/firestore";
-import DataTable from "../../components/ui/DataTable";
-import { Paciente } from "./types/paciente"; // Asegúrate de que este tipo de Paciente sea correcto
-import { Column } from "../../components/ui/DataTable";
+import DataTable, { Column } from "../../components/ui/DataTable";
 import CrearPacienteDialog from "./components/CrearPacienteDialog";
-import { getPacientes } from "./services/pacienteService"; // Ajusta la ruta si estás en otro nivel
+import { Link } from "react-router-dom";
+import { Paciente } from "./types/paciente";
+import { getPacientes } from "./services/pacienteService";
+import { obtenerUltimoIngresoActivo } from "./services/ingresosService";
+import { usePacientes } from "./hooks/usePacientes";
 
 const PacientesList: React.FC = () => {
-    const [showNewDialog, setShowNewDialog] = useState(false);
-      const [searchQuery, setSearchQuery] = useState<string>("");
-    const [pacientes, setPacientes] = useState<Paciente[]>([]);
-    const [loading, setLoading] = useState<boolean>(false);
-    const [filterEstado, setFilterEstado] = useState<"todos" | "activo" | "inactivo">("todos");
+  const { createPaciente, loading: creando } = usePacientes();
+  const [showNewDialog, setShowNewDialog] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [pacientes, setPacientes] = useState<Paciente[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [filterEstado, setFilterEstado] = useState<"todos" | "activo" | "inactivo">("todos");
 
-    useEffect(() => {
-        const fetchPacientes = async () => {
-            setLoading(true);
-            try { // Agrega un try-catch para manejar errores en la carga
-                const snapshot = await getDocs(collection(db, "pacientes"));
-                const data = snapshot.docs.map((doc) => ({
-                    id: doc.id,
-                    ...(doc.data() as Omit<Paciente, "id">),
-                })) as Paciente[];
-                setPacientes(data);
-            } catch (error) {
-                console.error("Error al cargar pacientes:", error);
-                // Opcional: mostrar un mensaje de error al usuario
-            } finally {
-                setLoading(false);
-            }
-        };
-        fetchPacientes();
-    }, []);
+  const handleCreatePaciente = async (data: Omit<Paciente, "id" | "creado" | "estado">) => {
+    const id = await createPaciente(data);
+    if (id) {
+      const nuevos = await getPacientes();
+      setPacientes(nuevos);
+      setShowNewDialog(false);
+    }
+  };
 
-    const filteredPacientes = pacientes.filter((p) => {
-        // **MODIFICACIÓN AQUÍ**
-        // Primero, verifica si p.nombre existe y es una cadena
-        const pacienteNombre = p.nombre_completo ? p.nombre_completo.toLowerCase() : ''; // Si p.nombre es null/undefined, usa una cadena vacía
-        console.log("Nombre del paciente en minúsculas:", pacienteNombre);
-        const searchLower = searchQuery;
-
-        const matchesSearch = pacienteNombre.includes(searchLower);
-
-        // Lógica de filtrado por estado (similar a Familiares)
-        const matchesEstado = filterEstado === "todos" || p.estado === filterEstado;
-
-        return matchesSearch && matchesEstado;
-    });
-
-    const handleCreatePaciente = async (data: Omit<Paciente, "id" | "creado" | "estado">) => {
-        const creado = new Date().toISOString();
-        const payload: Omit<Paciente, "id"> = {
-            ...data,
-            estado: "activo",
-            creado,
-        };
-        const docRef = await addDoc(collection(db, "pacientes"), payload);
-        setShowNewDialog(false);
-        setPacientes((prev) => [...prev, { ...payload, id: docRef.id }]);
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      setLoading(true);
+      try {
+        const basePacientes = await getPacientes();
+        const pacientesConIngreso = await Promise.all(
+          basePacientes.map(async (paciente) => {
+            const ultimoIngreso = await obtenerUltimoIngresoActivo(paciente.id!);
+            return {
+              ...paciente,
+              ultimo_ingreso_activo: ultimoIngreso?.fecha_ingreso || null,
+              ingreso_voluntario: ultimoIngreso?.voluntario ?? null,
+            };
+          })
+        );
+        setPacientes(pacientesConIngreso);
+      } catch (error) {
+        console.error("Error al cargar pacientes:", error);
+      } finally {
+        setLoading(false);
+      }
     };
+    fetchPacientes();
+  }, []);
 
-    const columns: Column<Paciente>[] = [
-        {
-            header: "Nombre",
-            accessorKey: "nombre_completo" as keyof Paciente,
-        },
-        {
-            header: "Ingreso",
-            accessorKey: "fecha_ingreso" as keyof Paciente,
-        },
-        {
-            header: "Estado",
-            accessorKey: "estado" as keyof Paciente,
-            cell: ({ cell }: any) => (
-                <span
-                    className={
-                        cell.getValue() === "activo"
-                            ? "px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs"
-                            : "px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs"
-                    }
-                >
-                    {cell.getValue()}
-                </span>
-            ),
-        },
-        {
-            header: "Options",
-            id: "actions",
-            cell: ({ row }: any) => (
-               <div className="flex justify-center">
-                    {/* Cambiar a Link para navegar a la nueva página */}
-                    <Link to={`/pacientes/${row.original.id}`}>
-                        <Button
-                            variant="outlinePrimary"
-                            size="sm"
-                        >
-                            Detalle
-                        </Button>
-                    </Link>
-                </div>
-            ),
-        }
+  const filteredPacientes = pacientes.filter((p) => {
+    const nombre = p.nombre_completo?.toLowerCase() || "";
+    const search = searchQuery.toLowerCase();
+    const matchesSearch = nombre.includes(search);
+    const matchesEstado = filterEstado === "todos" || p.estado === filterEstado;
+    return matchesSearch && matchesEstado;
+  });
 
-    ];
-
-    return (
-        <div className="p-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
-                    <p className="text-gray-500">Gestión de personas en tratamiento</p>
-                </div>
-                <Button
-                    onClick={() => setShowNewDialog(true)}
-                    className="bg-[#2A93C9] hover:bg-[#1B7CAD] text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
-                >
-                    <Plus size={18} />
-                    Agregar Paciente
-                </Button>
-            </div>
-
-            <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col md:flex-row items-center gap-4">
-                <Input
-                    placeholder="Buscar por nombre..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    leftIcon={<Search size={18} />}
-                />
-                <div className="flex gap-2">
-                    {["todos", "activo", "inactivo"].map((estado) => (
-                        <Button
-                            key={estado}
-                            variant={filterEstado === estado ? "primary" : "outline"}
-                            onClick={() => setFilterEstado(estado as any)}
-                        >
-                            {estado[0].toUpperCase() + estado.slice(1)}
-                        </Button>
-                    ))}
-                </div>
-            </div>
-
-            <Dialog
-                isOpen={showNewDialog}
-                onClose={() => setShowNewDialog(false)}
-                title="Registrar nuevo paciente"
-            >
-                <PacienteForm onSubmit={handleCreatePaciente} />
-            </Dialog>
-
-            <DataTable
-                columns={columns}
-                data={filteredPacientes}
-                loading={loading}
-                emptyText="No hay pacientes registrados"
-            />
-
-        
-
-
-            <CrearPacienteDialog
-                isOpen={showNewDialog}
-                onClose={() => setShowNewDialog(false)}
-                onPacienteCreado={async () => {
-                    const nuevos = await getPacientes();
-                    setPacientes(nuevos);
-                }}
-            />
-
+  const columns: Column<
+    Paciente & { ultimo_ingreso_activo?: string | null; ingreso_voluntario?: boolean | null }
+  >[] = [
+    {
+      header: "Nombre",
+      accessorKey: "nombre_completo",
+    },
+    {
+      header: "Ingreso",
+      accessorKey: "ultimo_ingreso_activo",
+      cell: ({ cell }) => <span className="text-sm text-gray-800">{cell.getValue() || "—"}</span>,
+    },
+    {
+      header: "Voluntario",
+      accessorKey: "ingreso_voluntario",
+      cell: ({ cell }) => (
+        <span className="text-xs px-2 py-1 rounded-full bg-gray-100">
+          {cell.getValue() === true ? "Sí" : cell.getValue() === false ? "No" : "—"}
+        </span>
+      ),
+    },
+    {
+      header: "Estado",
+      accessorKey: "estado",
+      cell: ({ cell }) => (
+        <span
+          className={
+            cell.getValue() === "activo"
+              ? "px-2 py-1 rounded-full bg-green-100 text-green-700 text-xs"
+              : "px-2 py-1 rounded-full bg-gray-100 text-gray-700 text-xs"
+          }
+        >
+          {cell.getValue()}
+        </span>
+      ),
+    },
+    {
+      header: "Opciones",
+      id: "actions",
+      cell: ({ row }) => (
+        <div className="flex justify-center">
+          <Link to={`/pacientes/${row.original.id}`}>
+            <Button variant="outlinePrimary" size="sm">
+              Detalle
+            </Button>
+          </Link>
         </div>
-    );
+      ),
+    },
+  ];
+
+  return (
+    <div className="p-6">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+        <div>
+          <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
+          <p className="text-gray-500">Gestión de personas en tratamiento</p>
+        </div>
+        <Button
+          onClick={() => setShowNewDialog(true)}
+          className="bg-[#2A93C9] hover:bg-[#1B7CAD] text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
+        >
+          <Plus size={18} /> Agregar Paciente
+        </Button>
+      </div>
+
+      <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col md:flex-row items-center gap-4">
+        <Input
+          placeholder="Buscar por nombre..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+          leftIcon={<Search size={18} />}
+        />
+        <div className="flex gap-2">
+          {["todos", "activo", "inactivo"].map((estado) => (
+            <Button
+              key={estado}
+              variant={filterEstado === estado ? "primary" : "outline"}
+              onClick={() => setFilterEstado(estado as any)}
+            >
+              {estado[0].toUpperCase() + estado.slice(1)}
+            </Button>
+          ))}
+        </div>
+      </div>
+
+      <DataTable
+        columns={columns}
+        data={filteredPacientes}
+        loading={loading}
+        emptyText="No hay pacientes registrados"
+      />
+
+      <CrearPacienteDialog
+        isOpen={showNewDialog}
+        onClose={() => setShowNewDialog(false)}
+        onPacienteCreado={async () => {
+          const nuevos = await getPacientes();
+          setPacientes(nuevos);
+        }}
+      />
+    </div>
+  );
 };
 
 export default PacientesList;

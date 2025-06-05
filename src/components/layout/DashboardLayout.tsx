@@ -233,7 +233,7 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
          
             <NavItem to="cuentasDeCobro" icon={<ClipboardList size={20} />} label="Cuentas de cobro" />
 
-            <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
+         
 
         </>
       )}
@@ -315,7 +315,7 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
                 <NavItem to="/pacientes" icon={<Users />} label="Pacientes" />
                 <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Familiares" />
                 <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
-                <NavItem to="pacientesList" icon={<ClipboardList size={20} />} label="Pacientes list" />
+
               </>
             )}
 

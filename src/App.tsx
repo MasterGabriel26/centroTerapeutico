@@ -82,8 +82,8 @@ const App: React.FC = () => {
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
-        <Route path="pacientes" element={<Pacientes />} />
-           <Route path="pacientesList" element={<PacientesList />} />
+    
+           <Route path="pacientes" element={<PacientesList />} />
            <Route path="cuentasDeCobro" element={<PagosPage/>} />
         <Route path="familiares" element={<Familiares />} />
         <Route path="gastos" element={<Gastos />} />

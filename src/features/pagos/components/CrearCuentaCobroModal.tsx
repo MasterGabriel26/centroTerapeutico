@@ -20,7 +20,6 @@ const CrearCuentaCobroModal = ({ open, onClose, pacienteId, onCreated }: Props) 
   const [monto, setMonto] = useState("");
   const [concepto, setConcepto] = useState("");
   const [notas, setNotas] = useState("");
-  const [metodoPago, setMetodoPago] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleCrear = async () => {
@@ -29,7 +28,6 @@ const CrearCuentaCobroModal = ({ open, onClose, pacienteId, onCreated }: Props) 
       paciente_id: pacienteId,
       fecha: format(new Date(), "yyyy-MM-dd"),
       monto: parseFloat(monto),
-      metodo_pago: metodoPago || undefined,
       estado: "generado",
       periodo: { desde, hasta },
       concepto,
@@ -65,11 +63,7 @@ const CrearCuentaCobroModal = ({ open, onClose, pacienteId, onCreated }: Props) 
         <label className="block text-sm text-gray-600 mb-1">Concepto</label>
         <TextArea value={concepto} onChange={(e) => setConcepto(e.target.value)} rows={2} />
       </div>
-
-      {/* <div>
-        <label className="block text-sm text-gray-600 mb-1">Método de Pago (opcional)</label>
-        <Input value={metodoPago} onChange={(e) => setMetodoPago(e.target.value)} placeholder="Efectivo, transferencia, etc." />
-      </div> */}
+   
 
       <div>
         <label className="block text-sm text-gray-600 mb-1">Notas (opcional)</label>

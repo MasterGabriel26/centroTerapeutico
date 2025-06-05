@@ -5,6 +5,9 @@ import DataTable, { Column } from "../../../../components/ui/DataTable";
 import { CuentaCobro } from "../../../pagos/types/cuenta_cobro";
 import CrearCuentaCobroModal from "../../../pagos/components/CrearCuentaCobroModal";
 import DetalleCuentaCobroModal from "../../../pagos/components/DetalleCuentaCobroModal";
+import AuditoriaCuentaCobroModal from "../../../auditoriaCuentaDeCobro/components/AuditoriaCuentaCobroModal";
+import { useAuditoriaCuentaCobro } from "../../../auditoriaCuentaDeCobro/hooks/useAuditoriaCuentaCobro";
+
 
 const columns: Column<CuentaCobro>[] = [
   {
@@ -69,6 +72,17 @@ const CuentasTab = ({ pacienteId }: { pacienteId: string }) => {
   const { cuentas, loading, refetch, pacientes, usuarios } = useCuentaDeCobro();
   const [showModal, setShowModal] = useState(false);
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<CuentaCobro | null>(null);
+const [mostrarAuditoria, setMostrarAuditoria] = useState(false);
+const [cuentaParaAuditoria, setCuentaParaAuditoria] = useState<CuentaCobro | null>(null);
+
+
+
+
+const { auditorias, usuarios: usuariosAuditoria, refetch: refetchAuditorias } = useAuditoriaCuentaCobro(
+  cuentaSeleccionada?.paciente_id || "",
+  cuentaSeleccionada?.id || ""
+);
+
 
   const cuentasPaciente = cuentas.filter(
     (cuenta) => cuenta.paciente_id === pacienteId
@@ -163,17 +177,35 @@ const CuentasTab = ({ pacienteId }: { pacienteId: string }) => {
       )}
 
       {cuentaSeleccionada && (
-        <DetalleCuentaCobroModal
-          cuenta={cuentaSeleccionada}
-          onClose={() => setCuentaSeleccionada(null)}
-          pacienteNombre={pacientes[cuentaSeleccionada.paciente_id] || "-"}
-          usuarioNombre={
-            cuentaSeleccionada.id
-              ? usuarios[cuentaSeleccionada.usuario_id]
-              : "-"
-          }
-        />
-      )}
+  <DetalleCuentaCobroModal
+    cuenta={cuentaSeleccionada}
+    onClose={() => setCuentaSeleccionada(null)}
+  onVerAuditoria={() => {
+  setCuentaParaAuditoria(cuentaSeleccionada); // 👉 guarda la cuenta para el historial
+  setCuentaSeleccionada(null); // cierra el modal detalle
+  setTimeout(() => setMostrarAuditoria(true), 100); // abre el modal de auditoría
+}}
+
+
+    pacienteNombre={pacientes[cuentaSeleccionada.paciente_id] || "-"}
+   
+  />
+)}
+<AuditoriaCuentaCobroModal
+  open={mostrarAuditoria}
+  onClose={() => {
+    setMostrarAuditoria(false);
+    setTimeout(() => {
+      if (cuentaParaAuditoria) {
+        setCuentaSeleccionada(cuentaParaAuditoria);
+        setCuentaParaAuditoria(null);
+      }
+    }, 100); // pequeño delay para evitar conflicto de render
+  }}
+  auditorias={auditorias}
+  usuarios={usuariosAuditoria}
+/>
+
     </div>
   );
 };

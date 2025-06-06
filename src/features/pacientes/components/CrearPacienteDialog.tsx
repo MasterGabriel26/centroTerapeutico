@@ -3,9 +3,10 @@ import { Dialog } from "../../../components/ui/Dialog";
 import { Input } from "../../../components/ui/Input";
 import { Button } from "../../../components/ui/Button";
 import { usePacientes } from "../hooks/usePacientes";
-import { FileText, Home, Mail, Phone, User, Calendar, X } from "lucide-react";
+import { FileText, Home, Mail, Phone, User, Calendar } from "lucide-react";
 import { format } from "date-fns";
-import { es } from "date-fns/locale";
+import { TextArea } from "../../../components/ui/TextArea";
+
 
 interface Props {
   isOpen: boolean;
@@ -17,80 +18,72 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
   const { createPaciente, loading } = usePacientes();
 
   const [formData, setFormData] = useState({
-    nombre_completo: "",
-    documento: "",
-    fecha_nacimiento: "",
-    direccion: "",
-    telefono: "",
-    email: "",
-    fecha_ingreso: format(new Date(), 'yyyy-MM-dd'), // Fecha actual por defecto
-  });
+  nombre_completo: "",
+  documento: "",
+  fecha_nacimiento: "",
+  direccion: "",
+  telefono: "",
+  email: "",
+  fecha_ingreso: format(new Date(), 'yyyy-MM-dd'),
+  motivo_ingreso: "",
+  voluntario: false,
+});
+
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-    
-    // Limpiar error al escribir
+    const { name, value, type, checked } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === "checkbox" ? checked : value,
+    }));
+
     if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
+      setErrors(prev => ({ ...prev, [name]: "" }));
     }
   };
 
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
-    
-    if (!formData.nombre_completo.trim()) {
-      newErrors.nombre_completo = "Nombre completo es requerido";
-    }
-    
-    if (!formData.documento.trim()) {
-      newErrors.documento = "Documento es requerido";
-    }
-    
-    if (!formData.fecha_nacimiento) {
-      newErrors.fecha_nacimiento = "Fecha de nacimiento es requerida";
-    }
-    
-    if (!formData.telefono.trim()) {
-      newErrors.telefono = "Teléfono es requerido";
-    } else if (!/^\d{7,15}$/.test(formData.telefono)) {
-      newErrors.telefono = "Teléfono no válido";
-    }
-    
-    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = "Correo electrónico no válido";
-    }
-    
+
+    if (!formData.nombre_completo.trim()) newErrors.nombre_completo = "Nombre completo es requerido";
+    if (!formData.documento.trim()) newErrors.documento = "Documento es requerido";
+    if (!formData.fecha_nacimiento) newErrors.fecha_nacimiento = "Fecha de nacimiento es requerida";
+    if (!formData.telefono.trim()) newErrors.telefono = "Teléfono es requerido";
+    else if (!/^\d{7,15}$/.test(formData.telefono)) newErrors.telefono = "Teléfono no válido";
+    if (formData.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = "Correo electrónico no válido";
+if (!formData.motivo_ingreso.trim()) newErrors.motivo_ingreso = "Motivo de ingreso requerido";
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = async () => {
     if (!validateForm()) return;
-    
+
     const id = await createPaciente(formData);
     if (id) {
       onPacienteCreado();
       onClose();
-      // Reset form after successful submission
       setFormData({
         nombre_completo: "",
         documento: "",
         fecha_nacimiento: "",
+        motivo_ingreso: "",
         direccion: "",
         telefono: "",
         email: "",
         fecha_ingreso: format(new Date(), 'yyyy-MM-dd'),
+        voluntario: false,
       });
     }
   };
 
   return (
-    <Dialog 
-      isOpen={isOpen} 
-      onClose={onClose} 
+    <Dialog
+      isOpen={isOpen}
+      onClose={onClose}
       title={
         <div className="flex items-center gap-2">
           <div className="bg-blue-100 p-2 rounded-full">
@@ -102,7 +95,6 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
       size="lg"
     >
       <div className="space-y-4 p-6">
-        {/* Nombre completo */}
         <Input
           name="nombre_completo"
           label="Nombre completo"
@@ -115,7 +107,6 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
         />
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Documento */}
           <Input
             name="documento"
             label="Número de documento"
@@ -127,7 +118,6 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
             required
           />
 
-          {/* Teléfono */}
           <Input
             name="telefono"
             label="Teléfono"
@@ -139,7 +129,6 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
             required
           />
 
-          {/* Fecha de nacimiento */}
           <Input
             name="fecha_nacimiento"
             label="Fecha de nacimiento"
@@ -152,7 +141,6 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
             max={format(new Date(), 'yyyy-MM-dd')}
           />
 
-          {/* Fecha de ingreso */}
           <Input
             name="fecha_ingreso"
             label="Fecha de ingreso"
@@ -164,7 +152,22 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
           />
         </div>
 
-        {/* Dirección */}
+        <Input
+          name="voluntario"
+          label="¿Es voluntario?"
+          type="checkbox"
+          checked={formData.voluntario}
+          onChange={handleChange}
+        />
+<TextArea
+  name="motivo_ingreso"
+  label="Motivo de ingreso"
+  placeholder="Describe brevemente el motivo del ingreso"
+  value={formData.motivo_ingreso}
+  onChange={(e) => handleChange(e as any)}
+  required
+/>
+
         <Input
           name="direccion"
           label="Dirección"
@@ -174,7 +177,6 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
           leftIcon={<Home size={18} className="text-gray-400" />}
         />
 
-        {/* Email */}
         <Input
           name="email"
           label="Correo electrónico"
@@ -188,15 +190,15 @@ const CrearPacienteDialog: React.FC<Props> = ({ isOpen, onClose, onPacienteCread
       </div>
 
       <div className="flex justify-end gap-3 px-6 pb-4 pt-2 border-t border-gray-100">
-        <Button 
-          variant="outline" 
+        <Button
+          variant="outline"
           onClick={onClose}
           className="border-gray-300 text-gray-700 hover:bg-gray-50"
         >
           Cancelar
         </Button>
-        <Button 
-          onClick={handleSubmit} 
+        <Button
+          onClick={handleSubmit}
           isLoading={loading}
           className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
           disabled={loading}

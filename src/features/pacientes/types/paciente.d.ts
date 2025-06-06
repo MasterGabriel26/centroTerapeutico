@@ -1,4 +1,7 @@
 // features/pacientes/types/paciente.d.ts
+
+
+
 export interface Paciente {
   id?: string;
   nombre_completo: string;
@@ -11,6 +14,5 @@ export interface Paciente {
   creado: string;
   fecha_ingreso: string;
   fecha_salida?: string;
+  voluntario: boolean;
 }
-
-

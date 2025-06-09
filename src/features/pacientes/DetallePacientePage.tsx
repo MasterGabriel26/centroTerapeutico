@@ -12,12 +12,13 @@ import { User, ArrowLeft } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { format } from 'date-fns';
-import es from 'date-fns/locale/es';
+import {es} from 'date-fns/locale/es';
 
 
 
 import imagenEjemplo from "./ejemplo1.jpg"
 import CuentasTab from "./components/PacienteDetalleTabs/CuentasTab";
+import IngresosTab from "./components/PacienteDetalleTabs/IngresosTab";
 
 
 const PacienteDetallePage: React.FC = () => {
@@ -223,23 +224,30 @@ const PacienteDetallePage: React.FC = () => {
               >
                 Receta Médica
               </Tab>
-              <Tab
+              {/* <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 4
                     ? "border-blue-600 text-blue-700"
                     : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Novedades
-              </Tab>
+              </Tab> */}
               <Tab
+                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 4
+                    ? "border-blue-600 text-blue-700"
+                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  }`}
+              >
+                Cuentas de cobro
+              </Tab>
+ <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 5
                     ? "border-blue-600 text-blue-700"
                     : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
-                Cuentas
+                Ingresos del paciente
               </Tab>
-
 
             </TabList>
           </div>
@@ -259,11 +267,14 @@ const PacienteDetallePage: React.FC = () => {
               <TabPanel>
                 <RecetasTab pacienteId={paciente.id!} />
               </TabPanel>
-              <TabPanel>
+         {/* <TabPanel>
                 <NovedadesTab pacienteId={paciente.id!} />
+              </TabPanel>  */}
+                <TabPanel>
+                <CuentasTab pacienteId={paciente.id!} />
               </TabPanel>
 <TabPanel>
-    <CuentasTab pacienteId={paciente.id!} />
+    <IngresosTab paciente={paciente!} />
   </TabPanel>
             </Tabs>
           </div>

@@ -71,7 +71,7 @@ function DataTable<T extends { id?: string | number }>({
 
   return (
     <div className={`overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm ${className}`}>
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto -mx-px">
         <table className="min-w-full divide-y divide-gray-200">
           <thead className="bg-gray-50">
             <tr>
@@ -84,17 +84,17 @@ function DataTable<T extends { id?: string | number }>({
                     key={String(col.id || col.accessorKey || idx)}
                     scope="col"
                     className={`
-                      px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
-                      ${canSort ? "cursor-pointer hover:bg-gray-100" : ""}
+                      px-3 sm:px-4 py-2 sm:py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider
+                      ${canSort ? "cursor-pointer hover:bg-gray-100 select-none" : ""}
                       ${col.align === "center" ? "text-center" : ""}
                       ${col.align === "right" ? "text-right" : ""}
                     `}
                     onClick={() => canSort && requestSort(col.accessorKey || col.id || "")}
                   >
                     <div className={`flex items-center ${col.align === "center" ? "justify-center" : col.align === "right" ? "justify-end" : ""}`}>
-                      {col.header}
-                      {isSorted && (
-                        <span className="ml-1">
+                      <span className="whitespace-nowrap">{col.header}</span>
+                      {canSort && isSorted && (
+                        <span className="ml-1 flex-shrink-0">
                           {sortConfig.direction === "asc" ? (
                             <ArrowUp className="h-3 w-3" />
                           ) : (
@@ -114,7 +114,7 @@ function DataTable<T extends { id?: string | number }>({
                 <td colSpan={columns.length} className="px-4 py-6 text-center">
                   <div className="flex justify-center items-center space-x-2 text-gray-500">
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    <span>Cargando datos...</span>
+                    <span className="text-sm sm:text-base">Cargando datos...</span>
                   </div>
                 </td>
               </tr>
@@ -123,7 +123,7 @@ function DataTable<T extends { id?: string | number }>({
                 <td colSpan={columns.length} className="px-4 py-8 text-center">
                   <div className="text-gray-400">
                     {typeof emptyText === "string" ? (
-                      <p>{emptyText}</p>
+                      <p className="text-sm sm:text-base">{emptyText}</p>
                     ) : (
                       emptyText
                     )}
@@ -137,7 +137,7 @@ function DataTable<T extends { id?: string | number }>({
                   className={`
                     transition-colors duration-100
                     ${onRowClick ? "cursor-pointer hover:bg-gray-50" : ""}
-                    ${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    ${rowIdx % 2 === 0 ? "bg-white" : "bg-gray-50/50"}
                   `}
                   onClick={() => onRowClick && onRowClick(row)}
                 >
@@ -145,23 +145,25 @@ function DataTable<T extends { id?: string | number }>({
                     <td
                       key={String(col.id || col.accessorKey || colIdx)}
                       className={`
-                        px-4 py-3 whitespace-nowrap
+                        px-3 sm:px-4 py-2 sm:py-3
                         ${col.align === "center" ? "text-center" : ""}
                         ${col.align === "right" ? "text-right" : ""}
-                        text-sm text-gray-800
+                        text-xs sm:text-sm text-gray-800
                       `}
                     >
-                      {col.cell
-                        ? col.cell({
-                            row: { original: row },
-                            cell: {
-                              getValue: () =>
-                                col.accessorKey ? row[col.accessorKey] : undefined,
-                            },
-                          })
-                        : col.accessorKey
-                        ? (row as any)[col.accessorKey]
-                        : null}
+                      <div className="truncate max-w-xs">
+                        {col.cell
+                          ? col.cell({
+                              row: { original: row },
+                              cell: {
+                                getValue: () =>
+                                  col.accessorKey ? row[col.accessorKey] : undefined,
+                              },
+                            })
+                          : col.accessorKey
+                          ? (row as any)[col.accessorKey]
+                          : null}
+                      </div>
                     </td>
                   ))}
                 </tr>

@@ -9,63 +9,63 @@ import AuditoriaCuentaCobroModal from "../../../auditoriaCuentaDeCobro/component
 import { useAuditoriaCuentaCobro } from "../../../auditoriaCuentaDeCobro/hooks/useAuditoriaCuentaCobro";
 
 
-const columns: Column<CuentaCobro>[] = [
-  {
-    header: "Generación",
-    accessorKey: "fecha",
-    cell: ({ cell }) =>
-      new Date(cell.getValue() as string).toLocaleDateString("es-ES"),
-  },
-  {
-    header: "Periodo",
-    id: "periodo",
-    cell: ({ row }) => {
-      const periodo = row.original.periodo;
-      if (!periodo) return "-";
-      const desde = new Date(periodo.desde).toLocaleDateString("es-ES");
-      const hasta = new Date(periodo.hasta).toLocaleDateString("es-ES");
-      return `${desde} → ${hasta}`;
-    },
-  },
-  {
-    header: "Estado",
-    accessorKey: "estado",
-    cell: ({ cell }) => {
-      const estado = cell.getValue() as string;
-      const style: { [key: string]: string } = {
-        pagada: "bg-green-100 text-green-700",
-        enviada: "bg-indigo-100 text-indigo-700",
-        generado: "bg-blue-100 text-blue-700",
-        rechazada: "bg-red-100 text-red-700",
-        anulado: "bg-gray-200 text-gray-700",
-      };
-      return (
-        <span
-          className={`px-2 py-1 rounded-full text-xs ${style[estado] || "bg-gray-100 text-gray-700"
-            }`}
-        >
-          {estado}
-        </span>
-      );
-    },
-  },
-  {
-    header: "Opciones",
-    id: "acciones",
-    cell: ({ row }) => (
-      <div className="flex justify-center">
-        <Button
-          variant="outlinePrimary"
-          size="sm"
-          onClick={() => setCuentaSeleccionada(row.original)}
-        >
-          Detalle
-        </Button>
-      </div>
-    ),
-  }
+// const columns: Column<CuentaCobro>[] = [
+//   {
+//     header: "Generación",
+//     accessorKey: "fecha",
+//     cell: ({ cell }) =>
+//       new Date(cell.getValue() as string).toLocaleDateString("es-ES"),
+//   },
+//   {
+//     header: "Periodo",
+//     id: "periodo",
+//     cell: ({ row }) => {
+//       const periodo = row.original.periodo;
+//       if (!periodo) return "-";
+//       const desde = new Date(periodo.desde).toLocaleDateString("es-ES");
+//       const hasta = new Date(periodo.hasta).toLocaleDateString("es-ES");
+//       return `${desde} → ${hasta}`;
+//     },
+//   },
+//   {
+//     header: "Estado",
+//     accessorKey: "estado",
+//     cell: ({ cell }) => {
+//       const estado = cell.getValue() as string;
+//       const style: { [key: string]: string } = {
+//         pagada: "bg-green-100 text-green-700",
+//         enviada: "bg-indigo-100 text-indigo-700",
+//         generado: "bg-blue-100 text-blue-700",
+//         rechazada: "bg-red-100 text-red-700",
+//         anulado: "bg-gray-200 text-gray-700",
+//       };
+//       return (
+//         <span
+//           className={`px-2 py-1 rounded-full text-xs ${style[estado] || "bg-gray-100 text-gray-700"
+//             }`}
+//         >
+//           {estado}
+//         </span>
+//       );
+//     },
+//   },
+//   {
+//     header: "Opciones",
+//     id: "acciones",
+//     cell: ({ row }) => (
+//       <div className="flex justify-center">
+//         <Button
+//           variant="outlinePrimary"
+//           size="sm"
+//           onClick={() => setCuentaSeleccionada(row.original)}
+//         >
+//           Detalle
+//         </Button>
+//       </div>
+//     ),
+//   }
 
-];
+// ]; 
 
 
 const CuentasTab = ({ pacienteId }: { pacienteId: string }) => {
@@ -82,6 +82,7 @@ const { auditorias, usuarios: usuariosAuditoria, refetch: refetchAuditorias } = 
   cuentaSeleccionada?.paciente_id || "",
   cuentaSeleccionada?.id || ""
 );
+
 
 
   const cuentasPaciente = cuentas.filter(

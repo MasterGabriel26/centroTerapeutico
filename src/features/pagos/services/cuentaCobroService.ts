@@ -3,10 +3,58 @@ import { db } from "../../../utils/firebase";
 import { CuentaCobro } from "../types/cuenta_cobro";
 import { registrarAuditoriaCuenta } from "../../auditoriaCuentaDeCobro/util/registrarAuditoriaCuenta";
 import { getAuth } from "firebase/auth";
-
+import { utils, writeFile } from "xlsx";
 export const getCuentasDeCobro = async (): Promise<CuentaCobro[]> => {
   const snapshot = await getDocs(collection(db, "cuentasDeCobro"));
   return snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() } as CuentaCobro));
+};
+
+// pagos/services/cuentaCobroService.ts
+export const getTodasLasCuentasConPaciente = async () => {
+  const [cuentas, pacientes] = await Promise.all([
+    getCuentasDeCobro(),
+    getPacientesMap(),
+  ]);
+
+  return cuentas.map((cuenta) => ({
+    ...cuenta,
+    paciente_nombre: pacientes[cuenta.paciente_id] || "Desconocido",
+  }));
+};
+export const exportarPagosFiltradosExcel = (cuentas: (CuentaCobro & { paciente_nombre?: string })[]) => {
+  const data = cuentas.map((c) => ({
+    Paciente: c.paciente_nombre || "",
+    Fecha: c.fecha,
+    Estado: c.estado,
+    Monto: c.monto,
+    Concepto: c.concepto,
+    "Periodo Desde": c.periodo?.desde,
+    "Periodo Hasta": c.periodo?.hasta,
+  }));
+
+  const wb = utils.book_new();
+  const ws = utils.json_to_sheet(data);
+  utils.book_append_sheet(wb, ws, "Pagos");
+
+  writeFile(wb, "pagos_filtrados.xlsx");
+};
+
+export const getTotalesPorEstado = async () => {
+  const snapshot = await getDocs(collection(db, "cuentasDeCobro"));
+  const estadoTotales: Record<string, number> = {};
+  let totalMonto = 0;
+
+  snapshot.forEach((doc) => {
+    const data = doc.data() as CuentaCobro;
+    const estado = data.estado;
+    const monto = data.monto || 0;
+
+    totalMonto += monto;
+    if (!estadoTotales[estado]) estadoTotales[estado] = 0;
+    estadoTotales[estado] += monto;
+  });
+
+  return { totalMonto, estadoTotales };
 };
 
 export const getPacientesMap = async (): Promise<{ [id: string]: string }> => {

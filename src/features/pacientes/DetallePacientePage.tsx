@@ -12,7 +12,7 @@ import { User, ArrowLeft } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { format } from 'date-fns';
-import {es} from 'date-fns/locale/es';
+import { es } from 'date-fns/locale/es';
 
 
 
@@ -129,20 +129,25 @@ const PacienteDetallePage: React.FC = () => {
             {/* Foto de perfil con más protagonismo */}
             <div className="relative group">
               <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
-                {paciente.imagen_url ? (
+                <img
+                  src={imagenEjemplo}
+                  alt={paciente.nombre_completo}
+                  className="w-full h-full object-cover"
+                />
+                {/* {paciente.imagen_url ? (
                   <img
                     src={imagenEjemplo}
                     alt={paciente.nombre_completo}
                     className="w-full h-full object-cover"
                   />
                 ) : (
-                  /*<User size={64} className="text-blue-600" />*/
+               
                   <img
                     src={imagenEjemplo}
                     alt={paciente.nombre_completo}
                     className="w-full h-full object-cover"
                   />
-                )}
+                )} */}
               </div>
 
             </div>
@@ -158,8 +163,8 @@ const PacienteDetallePage: React.FC = () => {
                     ID: {paciente.id}
                   </span>
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${paciente.estado === "activo"
-                      ? "bg-green-100 text-green-800"
-                      : "bg-gray-100 text-gray-800"
+                    ? "bg-green-100 text-green-800"
+                    : "bg-gray-100 text-gray-800"
                     }`}>
                     {paciente.estado}
                   </span>
@@ -194,32 +199,32 @@ const PacienteDetallePage: React.FC = () => {
             >
               <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 0
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Información General
               </Tab>
               <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 1
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Familiares
               </Tab>
               <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 2
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Seguimiento
               </Tab>
               <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 3
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Receta Médica
@@ -240,10 +245,10 @@ const PacienteDetallePage: React.FC = () => {
               >
                 Cuentas de cobro
               </Tab>
- <Tab
+              <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 5
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Ingresos del paciente
@@ -267,15 +272,18 @@ const PacienteDetallePage: React.FC = () => {
               <TabPanel>
                 <RecetasTab pacienteId={paciente.id!} />
               </TabPanel>
-         {/* <TabPanel>
+              {/* <TabPanel>
                 <NovedadesTab pacienteId={paciente.id!} />
-              </TabPanel>  */}
-                <TabPanel>
+              </TabPanel> */}
+              <TabPanel>
                 <CuentasTab pacienteId={paciente.id!} />
               </TabPanel>
-<TabPanel>
-    <IngresosTab paciente={paciente!} />
-  </TabPanel>
+              <TabPanel>
+                <IngresosTab
+                  paciente={paciente!}
+                  onReingreso={() => console.log("Reingreso desde TabPanel")}
+                />
+              </TabPanel>
             </Tabs>
           </div>
         </div>

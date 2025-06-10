@@ -239,8 +239,8 @@ const PacienteDetallePage: React.FC = () => {
               </Tab> */}
               <Tab
                 className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 4
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                    ? "border-blue-600 text-blue-700"
+                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
                   }`}
               >
                 Cuentas de cobro

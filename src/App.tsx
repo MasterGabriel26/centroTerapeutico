@@ -15,7 +15,7 @@ import Dashboard from './pages/Dashboard';
 import Pacientes from './pages/Pacientes';
 import RegistroDiario from './pages/Gastos';
 import Pagos from './pages/Pagos';
-import FamiliarView from './pages/FamiliarView';
+import PacientePage from './pages/FamiliarView';
 import PacientesList from '../src/features/pacientes/PacientesPage'; // Asegúrate de que la ruta sea correcta
 import PagosPage from '../src/features/pagos/PagosPage';
 // Logo para preloader
@@ -88,7 +88,7 @@ const App: React.FC = () => {
         <Route path="familiares" element={<Familiares />} />
         <Route path="gastos" element={<Gastos />} />
         <Route path="pagos" element={<Pagos />} />
-        <Route path="mi-familiar" element={<FamiliarView />} />
+        <Route path="mi-familiar" element={<PacientePage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
         <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
 

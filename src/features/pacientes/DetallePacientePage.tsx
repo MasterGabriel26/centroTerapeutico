@@ -6,6 +6,7 @@ import FamiliaresTab from "./components/PacienteDetalleTabs/FamiliaresTab";
 import ImagenesTab from "./components/PacienteDetalleTabs/ImagenesTab";
 import RecetasTab from "./components/PacienteDetalleTabs/RecetasTab";
 import NovedadesTab from "./components/PacienteDetalleTabs/NovedadesTab";
+import VisitasTab from "./components/PacienteDetalleTabs/VisitasTab";
 import { Paciente } from "./types/paciente";
 import { Button } from "../../components/ui/Button";
 import { User, ArrowLeft } from "lucide-react";
@@ -254,6 +255,16 @@ const PacienteDetallePage: React.FC = () => {
                 Ingresos del paciente
               </Tab>
 
+               <Tab
+                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 6
+                  ? "border-blue-600 text-blue-700"
+                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
+                  }`}
+              >
+                Visitas
+              </Tab>
+
+
             </TabList>
           </div>
 
@@ -284,6 +295,10 @@ const PacienteDetallePage: React.FC = () => {
                   onReingreso={() => console.log("Reingreso desde TabPanel")}
                 />
               </TabPanel>
+              <TabPanel>
+                <VisitasTab pacienteId={paciente.id!} />
+              </TabPanel>
+              
             </Tabs>
           </div>
         </div>

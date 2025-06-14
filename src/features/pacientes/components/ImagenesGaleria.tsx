@@ -1,6 +1,6 @@
 // features/pacientes/components/ImagenesGaleria.tsx
 import React, { useEffect } from "react";
-import { useImagenes } from "../hooks/useImagenes";
+import { useImagenes } from "../hooks/useSeguimiento";
 
 const ImagenesGaleria = ({ pacienteId }: { pacienteId: string }) => {
   const { imagenes, loading, error, fetchImagenes, subirImagen } = useImagenes(pacienteId);

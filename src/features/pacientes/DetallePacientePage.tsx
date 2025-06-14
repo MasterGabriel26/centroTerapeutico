@@ -3,7 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { Tabs, TabList, Tab, TabPanel } from "../../components/ui/Tabs";
 import InfoGeneral from "./components/PacienteDetalleTabs/InfoGeneral";
 import FamiliaresTab from "./components/PacienteDetalleTabs/FamiliaresTab";
-import ImagenesTab from "./components/PacienteDetalleTabs/ImagenesTab";
+import ImagenesTab from "./components/PacienteDetalleTabs/SeguimientoTab";
 import RecetasTab from "./components/PacienteDetalleTabs/RecetasTab";
 import NovedadesTab from "./components/PacienteDetalleTabs/NovedadesTab";
 import VisitasTab from "./components/PacienteDetalleTabs/VisitasTab";

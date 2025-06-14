@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Tabs, TabList, Tab, TabPanel } from "../../../components/ui/Tabs";
 import InfoGeneral from "./PacienteDetalleTabs/InfoGeneral";
 import FamiliaresTab from "./PacienteDetalleTabs/FamiliaresTab";
-import ImagenesTab from "./PacienteDetalleTabs/ImagenesTab";
+import ImagenesTab from "./PacienteDetalleTabs/SeguimientoTab";
 import FormulaTab from "./PacienteDetalleTabs/RecetasTab";
 import NovedadesTab from "./PacienteDetalleTabs/NovedadesTab";
 import { Paciente } from "../types/paciente";

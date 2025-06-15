@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { doc, getDoc, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../utils/firebase';
-import { Calendar, Clock, Camera, FileText, User, CreditCard, AlertCircle, Loader2, Activity, Phone, MapPin, Mail } from 'lucide-react';
+import { Calendar, Clock, FileText, User, CreditCard, AlertCircle, Loader2, Activity, Phone, MapPin, Mail, Image as ImageIcon, X } from 'lucide-react';
 import { Button } from '../components/ui/Button';
 import { Card } from '../components/ui/Card';
 import { format, parseISO, differenceInDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useAuthStore } from '../store/authStore';
+import { useSeguimientos } from '../features/pacientes/hooks/useSeguimiento';
+import { useCuentaDeCobro } from '../features/pagos/hooks/useCuentaDeCobro';
 
 type Paciente = {
   id: string;
@@ -21,20 +23,40 @@ type Paciente = {
   voluntario: boolean;
 };
 
-type Imagen = {
-  id: string;
-  url: string;
-  descripcion: string;
-  fecha: string;
+type ImageModalProps = {
+  imageUrl: string;
+  onClose: () => void;
 };
 
-type Pago = {
-  id: string;
-  monto: number;
-  metodo_pago: string;
-  estado: string;
-  fecha: string;
-  comprobante_url: string;
+const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose }) => {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 backdrop-blur-sm">
+      <div className="relative max-w-4xl w-full p-4">
+        <button
+          onClick={onClose}
+          className="absolute -top-12 right-0 text-white hover:text-gray-300 transition-colors"
+          aria-label="Cerrar modal"
+        >
+          <X className="h-8 w-8" />
+        </button>
+        <div className="bg-white rounded-lg overflow-hidden">
+          <img 
+            src={imageUrl} 
+            alt="Imagen de seguimiento" 
+            className="w-full h-auto max-h-[80vh] object-contain"
+          />
+          <div className="p-3 bg-gray-100 text-right">
+            <button
+              onClick={onClose}
+              className="text-sm text-gray-700 hover:text-gray-900 font-medium"
+            >
+              Cerrar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 };
 
 const PacientePage = () => {
@@ -42,9 +64,37 @@ const PacientePage = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [paciente, setPaciente] = useState<Paciente | null>(null);
-  const [imagenes, setImagenes] = useState<Imagen[]>([]);
-  const [pagos, setPagos] = useState<Pago[]>([]);
   const [activeTab, setActiveTab] = useState('seguimiento');
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [retryCount, setRetryCount] = useState(0);
+
+  const { 
+    seguimientos, 
+    loading: loadingSeguimientos, 
+    error: errorSeguimientos,
+    fetchSeguimientos 
+  } = useSeguimientos(paciente?.id || '');
+
+  const { 
+    cuentas, 
+    loading: loadingCuentas, 
+    error: errorCuentas 
+  } = useCuentaDeCobro();
+
+  const handleImageError = (e: React.SyntheticEvent<HTMLImageElement>) => {
+    const target = e.target as HTMLImageElement;
+    target.style.display = 'none';
+    
+    const parent = target.parentElement;
+    if (parent) {
+      parent.innerHTML = `
+        <div class="w-full h-64 bg-gray-100 flex flex-col items-center justify-center rounded-lg border border-gray-200">
+          <ImageIcon class="h-12 w-12 text-gray-400 mb-2" />
+          <p class="text-gray-500 text-sm">No se pudo cargar la imagen</p>
+        </div>
+      `;
+    }
+  };
 
   useEffect(() => {
     const fetchData = async () => {
@@ -52,24 +102,13 @@ const PacientePage = () => {
         setLoading(true);
         setError(null);
 
-        console.log('Usuario desde store:', usuario);
-
         if (!usuario) {
           throw new Error('No hay usuario autenticado');
         }
 
-        if (!usuario.id && !usuario.uid) {
-          throw new Error('El usuario no tiene un ID válido');
-        }
-
         const userId = usuario.id || usuario.uid;
-        console.log('ID de usuario a usar:', userId);
-
         const userDoc = await getDoc(doc(db, 'users', userId));
         
-        console.log('Documento de usuario existe:', userDoc.exists());
-        console.log('Datos del documento:', userDoc.data());
-
         if (!userDoc.exists()) {
           const usuariosQuery = query(
             collection(db, 'users'), 
@@ -78,80 +117,72 @@ const PacientePage = () => {
           const usuariosSnapshot = await getDocs(usuariosQuery);
           
           if (usuariosSnapshot.empty) {
-            throw new Error(`Usuario no encontrado en la base de datos. ID buscado: ${userId}, Email: ${usuario.email}`);
+            throw new Error(`Usuario no encontrado en la base de datos`);
           }
           
           const userDocData = usuariosSnapshot.docs[0];
           const userData = userDocData.data();
           const pacienteId = userData.paciente_id;
           
-          console.log('Usuario encontrado por email:', userData);
-          
           if (!pacienteId) {
             setLoading(false);
             return;
           }
 
-          await fetchPacienteData(pacienteId, userDocData.id);
-          
+          await fetchPacienteData(pacienteId);
         } else {
           const userData = userDoc.data();
           const pacienteId = userData.paciente_id;
 
-          console.log('Datos del usuario:', userData);
-          console.log('ID del paciente:', pacienteId);
-
           if (!pacienteId) {
             setLoading(false);
             return;
           }
 
-          await fetchPacienteData(pacienteId, userId);
+          await fetchPacienteData(pacienteId);
         }
 
       } catch (err) {
-        console.error('Error detallado:', err);
-        setError(err instanceof Error ? err.message : 'Ocurrió un error desconocido');
+        console.error('Error al cargar datos:', err);
+        const errorMessage = err instanceof Error ? err.message : 'Ocurrió un error desconocido al cargar los datos';
+        setError(errorMessage);
+        
+        // Intentar nuevamente después de 5 segundos (máximo 3 intentos)
+        if (retryCount < 3) {
+          setTimeout(() => {
+            setRetryCount(retryCount + 1);
+          }, 5000);
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    const fetchPacienteData = async (pacienteId: string, familiarId: string) => {
-      const pacienteDoc = await getDoc(doc(db, 'pacientes', pacienteId));
-      if (!pacienteDoc.exists()) {
-        throw new Error('Paciente no encontrado');
-      }
-
-      setPaciente({
-        id: pacienteDoc.id,
-        ...pacienteDoc.data()
-      } as Paciente);
-
+    const fetchPacienteData = async (pacienteId: string) => {
       try {
-        const imagenesQuery = query(collection(db, `pacientes/${pacienteId}/imagenes`));
-        const imagenesSnapshot = await getDocs(imagenesQuery);
-        const imagenesData = imagenesSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Imagen[];
-        setImagenes(imagenesData);
-      } catch (imgError) {
-        console.warn('Error al cargar imágenes:', imgError);
-        setImagenes([]);
-      }
+        const pacienteDoc = await getDoc(doc(db, 'pacientes', pacienteId));
+        if (!pacienteDoc.exists()) {
+          throw new Error('Paciente no encontrado');
+        }
 
-      try {
-        const pagosQuery = query(collection(db, 'pagos'), where('familiar_id', '==', familiarId));
-        const pagosSnapshot = await getDocs(pagosQuery);
-        const pagosData = pagosSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data()
-        })) as Pago[];
-        setPagos(pagosData);
-      } catch (pagoError) {
-        console.warn('Error al cargar pagos:', pagoError);
-        setPagos([]);
+        const pacienteData = {
+          id: pacienteDoc.id,
+          ...pacienteDoc.data()
+        } as Paciente;
+
+        setPaciente(pacienteData);
+        
+        if (pacienteData.id) {
+          try {
+            await fetchSeguimientos();
+          } catch (err) {
+            console.error('Error al cargar seguimientos:', err);
+            setError('Error al cargar los seguimientos. Por favor intenta recargar la página.');
+          }
+        }
+      } catch (err) {
+        console.error('Error al cargar paciente:', err);
+        throw err;
       }
     };
 
@@ -161,7 +192,7 @@ const PacientePage = () => {
       setLoading(false);
       setError('No hay usuario autenticado');
     }
-  }, [usuario]);
+  }, [usuario, retryCount]);
 
   const calcularEdad = (fechaNacimiento: string) => {
     const hoy = new Date();
@@ -185,6 +216,15 @@ const PacientePage = () => {
     }
   };
 
+  const formatFechaCorta = (fecha: string) => {
+    try {
+      return format(parseISO(fecha), "dd MMM yyyy", { locale: es });
+    } catch (err) {
+      console.warn('Error al formatear fecha:', fecha, err);
+      return fecha;
+    }
+  };
+
   const getEstadoColor = (estado: string) => {
     switch (estado.toLowerCase()) {
       case 'activo':
@@ -197,6 +237,27 @@ const PacientePage = () => {
         return 'bg-gray-50 text-gray-700 border border-gray-200';
     }
   };
+
+  const seguimientosActivos = seguimientos
+    .filter(seg => seg.isActive)
+    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+
+  const cuentasPaciente = cuentas.filter(cuenta => cuenta.paciente_id === paciente?.id);
+
+  if (selectedImage) {
+    return (
+      <>
+        <div style={{ display: 'none' }}>
+          {/* Contenido normal oculto mientras el modal está abierto */}
+          <PacientePage />
+        </div>
+        <ImageModal 
+          imageUrl={selectedImage} 
+          onClose={() => setSelectedImage(null)} 
+        />
+      </>
+    );
+  }
 
   if (loading) {
     return (
@@ -221,16 +282,9 @@ const PacientePage = () => {
             </div>
             <h2 className="text-2xl font-bold text-gray-900 mb-3">Error al cargar los datos</h2>
             <p className="text-gray-600 mb-6 max-w-lg mx-auto leading-relaxed">{error}</p>
-            {process.env.NODE_ENV === 'development' && usuario && (
-              <div className="mt-6 p-4 bg-gray-50 rounded-xl text-left text-sm max-w-md mx-auto">
-                <p className="font-semibold text-gray-700 mb-2">Debug Info:</p>
-                <div className="space-y-1 text-gray-600">
-                  <p>Usuario ID: {usuario.id || 'undefined'}</p>
-                  <p>Usuario UID: {usuario.uid || 'undefined'}</p>
-                  <p>Usuario Email: {usuario.email || 'undefined'}</p>
-                </div>
-              </div>
-            )}
+            {retryCount < 3 ? (
+              <p className="text-gray-500 mb-4">Intentando nuevamente en {5 - retryCount} segundos...</p>
+            ) : null}
             <Button 
               variant="primary" 
               onClick={() => window.location.reload()}
@@ -271,7 +325,7 @@ const PacientePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="max-w-6xl mx-auto p-6">
-        {/* Header mejorado */}
+        {/* Header */}
         <div className="mb-8">
           <div className="bg-white rounded-2xl shadow-lg p-8 border-0">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Seguimiento del Paciente</h1>
@@ -279,7 +333,7 @@ const PacientePage = () => {
           </div>
         </div>
 
-        {/* Información básica mejorada */}
+        {/* Información básica */}
         <Card className="mb-8 bg-white shadow-xl rounded-2xl border-0 overflow-hidden">
           <div className="bg-gradient-to-r from-blue-400 to-blue-300 p-6">
             <div className="flex flex-col md:flex-row gap-6 items-start">
@@ -332,7 +386,7 @@ const PacientePage = () => {
           </div>
         </Card>
 
-        {/* Tabs mejorados */}
+        {/* Tabs */}
         <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden border-0">
           <div className="flex border-b border-gray-100">
             <button
@@ -367,7 +421,7 @@ const PacientePage = () => {
           <div className="p-6">
             {activeTab === 'seguimiento' ? (
               <div className="space-y-8">
-                {/* Resumen mejorado */}
+                {/* Resumen */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-xl p-6 border border-blue-200">
                     <div className="flex items-center gap-4">
@@ -387,7 +441,7 @@ const PacientePage = () => {
                         <Clock className="h-6 w-6" />
                       </div>
                       <div>
-                        <p className="text-emerald-700font-medium mb-1">Días en tratamiento</p>
+                        <p className="text-emerald-700 font-medium mb-1">Días en tratamiento</p>
                         <p className="font-bold text-emerald-900">
                           {differenceInDays(new Date(), parseISO(paciente.creado))} días
                         </p>
@@ -408,50 +462,109 @@ const PacientePage = () => {
                   </div>
                 </div>
 
-                {/* Galería de imágenes mejorada */}
+                {/* Lista de seguimientos */}
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900">
-                    <Camera className="h-6 w-6 text-blue-600" />
-                    Registro Visual
+                    <FileText className="h-6 w-6 text-blue-600" />
+                    Registro de Seguimientos
                   </h3>
                   
-                  {imagenes.length > 0 ? (
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                      {imagenes.map((imagen) => (
-                        <div key={imagen.id} className="group relative">
-                          <div className="rounded-xl overflow-hidden aspect-square bg-white shadow-md hover:shadow-lg transition-shadow duration-200">
-                            <img
-                              src={imagen.url}
-                              alt={imagen.descripcion || 'Registro del paciente'}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
-                            />
+                  {loadingSeguimientos ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                    </div>
+                  ) : errorSeguimientos ? (
+                    <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+                      {errorSeguimientos}
+                      <Button 
+                        variant="ghost" 
+                        onClick={fetchSeguimientos}
+                        className="mt-2 text-red-700 hover:bg-red-100"
+                      >
+                        Reintentar
+                      </Button>
+                    </div>
+                  ) : seguimientosActivos.length > 0 ? (
+                    <div className="space-y-6">
+                      {seguimientosActivos.map((seguimiento) => (
+                        <div 
+                          key={seguimiento.id} 
+                          className="bg-white rounded-xl shadow-md border border-gray-100 overflow-hidden transition-all hover:shadow-lg"
+                        >
+                          <div className="p-6">
+                            <div className="flex justify-between items-start gap-4">
+                              <div>
+                                <div className="flex items-center gap-3 mb-3">
+                                  <div className="bg-blue-100 p-2 rounded-lg">
+                                    <Activity className="h-5 w-5 text-blue-600" />
+                                  </div>
+                                  <span className="text-sm font-medium text-blue-600 bg-blue-50 px-3 py-1 rounded-full">
+                                    {formatFechaCorta(seguimiento.fecha)}
+                                  </span>
+                                </div>
+                                <h4 className="text-lg font-bold text-gray-900 mb-2">{seguimiento.comportamiento}</h4>
+                                <p className="text-gray-600 leading-relaxed">{seguimiento.descripcion}</p>
+                              </div>
+                              <div className="flex-shrink-0">
+                                <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-800">
+                                  Activo
+                                </span>
+                              </div>
+                            </div>
+                            
+                            {seguimiento.url && (
+                              <div className="mt-4">
+                                <div 
+                                  className="relative rounded-lg overflow-hidden border border-gray-200 cursor-pointer hover:shadow-md transition-shadow"
+                                  onClick={() => setSelectedImage(seguimiento.url)}
+                                >
+                                  <img 
+                                    src={seguimiento.url} 
+                                    alt="Seguimiento" 
+                                    className="w-full h-64 object-contain bg-gray-100"
+                                    onError={handleImageError}
+                                  />
+                                  <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent flex items-end p-4 opacity-0 hover:opacity-100 transition-opacity">
+                                    <span className="text-white text-sm font-medium flex items-center">
+                                      <ImageIcon className="inline mr-1 h-4 w-4" />
+                                      Haz clic para ampliar
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
                           </div>
-                          {imagen.descripcion && (
-                            <p className="mt-2 text-sm text-gray-600 text-center">{imagen.descripcion}</p>
-                          )}
                         </div>
                       ))}
                     </div>
                   ) : (
                     <div className="text-center py-12">
                       <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-md">
-                        <Camera className="h-8 w-8 text-gray-400" />
+                        <FileText className="h-8 w-8 text-gray-400" />
                       </div>
-                      <p className="text-gray-500 font-medium">No hay imágenes registradas aún</p>
+                      <p className="text-gray-500 font-medium">No hay seguimientos activos registrados</p>
                     </div>
                   )}
                 </div>
               </div>
             ) : (
               <div>
-                {/* Historial de pagos mejorado */}
+                {/* Historial de pagos */}
                 <div className="bg-gray-50 rounded-xl p-6">
                   <h3 className="text-xl font-bold mb-6 flex items-center gap-3 text-gray-900">
                     <CreditCard className="h-6 w-6 text-blue-600" />
                     Historial de Pagos
                   </h3>
                   
-                  {pagos.length > 0 ? (
+                  {loadingCuentas ? (
+                    <div className="flex justify-center py-8">
+                      <Loader2 className="h-8 w-8 text-blue-500 animate-spin" />
+                    </div>
+                  ) : errorCuentas ? (
+                    <div className="bg-red-50 text-red-700 p-4 rounded-lg">
+                      {errorCuentas}
+                    </div>
+                  ) : cuentasPaciente.length > 0 ? (
                     <div className="bg-white rounded-xl shadow-sm overflow-hidden">
                       <div className="overflow-x-auto">
                         <table className="min-w-full">
@@ -461,10 +574,13 @@ const PacientePage = () => {
                                 Fecha
                               </th>
                               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
+                                Concepto
+                              </th>
+                              <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                                 Monto
                               </th>
                               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
-                                Método
+                                Periodo
                               </th>
                               <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">
                                 Estado
@@ -472,24 +588,27 @@ const PacientePage = () => {
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-gray-200">
-                            {pagos.map((pago) => (
-                              <tr key={pago.id} className="hover:bg-gray-50 transition-colors">
+                            {cuentasPaciente.map((cuenta) => (
+                              <tr key={cuenta.id} className="hover:bg-gray-50 transition-colors">
                                 <td className="px-6 py-4 text-sm text-gray-900 font-medium">
-                                  {formatFecha(pago.fecha)}
+                                  {formatFecha(cuenta.fecha)}
+                                </td>
+                                <td className="px-6 py-4 text-sm text-gray-900">
+                                  {cuenta.concepto}
                                 </td>
                                 <td className="px-6 py-4 text-sm text-gray-900 font-bold">
-                                  ${pago.monto.toLocaleString('es-CO')}
+                                  ${cuenta.monto.toLocaleString('es-CO')}
                                 </td>
-                                <td className="px-6 py-4 text-sm text-gray-900 capitalize">
-                                  {pago.metodo_pago}
+                                <td className="px-6 py-4 text-sm text-gray-900">
+                                  {formatFecha(cuenta.periodo.desde)} - {formatFecha(cuenta.periodo.hasta)}
                                 </td>
                                 <td className="px-6 py-4">
                                   <span className={`px-3 py-1 inline-flex text-xs font-semibold rounded-full ${
-                                    pago.estado === 'pendiente' 
-                                      ? 'bg-amber-100 text-amber-800 border border-amber-200' 
-                                      : 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                                    cuenta.estado === 'pagada' 
+                                      ? 'bg-green-100 text-green-800 border border-green-200' 
+                                      : 'bg-amber-100 text-amber-800 border border-amber-200'
                                   }`}>
-                                    {pago.estado === 'pendiente' ? 'Pendiente' : 'Completado'}
+                                    {cuenta.estado}
                                   </span>
                                 </td>
                               </tr>
@@ -501,7 +620,7 @@ const PacientePage = () => {
                   ) : (
                     <div className="text-center py-12">
                       <div className="bg-white rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-md">
-                        <FileText className="h-8 w-8 text-gray-400" />
+                        <CreditCard className="h-8 w-8 text-gray-400" />
                       </div>
                       <p className="text-gray-500 font-medium">No hay registros de pagos</p>
                     </div>
@@ -512,7 +631,7 @@ const PacientePage = () => {
           </div>
         </div>
 
-        {/* Card de contacto mejorada */}
+        {/* Card de contacto */}
         <Card className="bg-gradient-to-r from-blue-600 to-indigo-600 border-0 shadow-xl rounded-2xl overflow-hidden">
           <div className="p-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">

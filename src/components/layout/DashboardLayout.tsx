@@ -238,7 +238,7 @@ const UserDropdown = ({ isMobile = false }: { isMobile?: boolean }) => (
         </>
       )}
       {isFamiliar && <NavItem to="/mi-familiar" icon={<UserIcon />} label="Mi Familiar" />}
-      {(isAdmin || isFamiliar) && <NavItem to="/pagos" icon={<CreditCard />} label="Pagos" />}
+      {(isAdmin) && <NavItem to="/pagos" icon={<CreditCard />} label="Pagos" />}
     </div>
   </nav>
 

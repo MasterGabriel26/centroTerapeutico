@@ -1,7 +1,6 @@
 "use client"
 
-import type React from "react"
-import { useState, useEffect } from "react"
+import React, { useState, useEffect } from "react"
 import {
   Search,
   User,
@@ -16,12 +15,25 @@ import {
   X,
   Eye,
   UserPlus,
+  Loader,
 } from "lucide-react"
+import { getFunctions, httpsCallable, connectFunctionsEmulator } from 'firebase/functions'
 import { Button } from "../components/ui/Button"
 import { Input } from "../components/ui/Input"
 import { Card } from "../components/ui/Card"
-import { collection, getDocs, addDoc } from "firebase/firestore"
-import { db } from "../utils/firebase"
+import { collection, getDocs, doc, getDoc } from "firebase/firestore"
+import { db,auth,app,functions } from "../utils/firebase"
+import {  onAuthStateChanged } from "firebase/auth"
+import { apiCall } from '../utils/api';
+
+
+interface Paciente {
+  id: string
+  nombre_completo: string
+  documento: string
+  email: string
+  telefono: string
+}
 
 interface Usuario {
   id: string
@@ -30,6 +42,8 @@ interface Usuario {
   telefono?: string
   tipo: "admin" | "medico" | "familiar"
   created_at: string
+  auth_uid?: string
+  paciente_id?: string
 }
 
 interface NewUserForm {
@@ -37,43 +51,118 @@ interface NewUserForm {
   email: string
   telefono: string
   tipo: "admin" | "medico" | "familiar"
+  password: string
+  paciente_id?: string
 }
 
 const Familiares = () => {
   const [usuarios, setUsuarios] = useState<Usuario[]>([])
+  const [pacientes, setPacientes] = useState<Paciente[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadingPacientes, setLoadingPacientes] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
   const [filterTipo, setFilterTipo] = useState<"todos" | "familiar" | "medico" | "admin" | "nuevos">("todos")
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [creating, setCreating] = useState(false)
+  const [authReady, setAuthReady] = useState(false)
+  
   const [newUser, setNewUser] = useState<NewUserForm>({
     nombre_completo: "",
     email: "",
     telefono: "",
     tipo: "familiar",
+    password: "",
   })
 
   const [selectedUser, setSelectedUser] = useState<Usuario | null>(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
+  const [pacienteAsociado, setPacienteAsociado] = useState<Paciente | null>(null)
+  const [loadingPaciente, setLoadingPaciente] = useState(false)
+  
 
+  // IMPORTANTE: Si estás en desarrollo local, descomenta esta línea
+  // connectFunctionsEmulator(functions, "localhost", 5001)
+
+  // Verificar autenticación
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log("Estado de auth:", user ? "Autenticado" : "No autenticado")
+      setAuthReady(true)
+    })
+
+    return () => unsubscribe()
+  }, [auth])
+
+  // Cargar usuarios
   useEffect(() => {
     const fetchUsuarios = async () => {
       try {
         const snapshot = await getDocs(collection(db, "users"))
-        const data = snapshot.docs.map((doc) => ({
+        const data = snapshot.docs.map(doc => ({
           id: doc.id,
-          ...doc.data(),
+          ...doc.data()
         })) as Usuario[]
         setUsuarios(data)
       } catch (error) {
-        console.error("Error fetching users:", error)
+        console.error("Error cargando usuarios:", error)
       } finally {
         setLoading(false)
       }
     }
-    fetchUsuarios()
-  }, [])
 
+    if (authReady) {
+      fetchUsuarios()
+    }
+  }, [authReady])
+
+  // Cargar pacientes cuando se abre el modal
+  useEffect(() => {
+    const fetchPacientes = async () => {
+      if (showCreateModal && pacientes.length === 0) {
+        setLoadingPacientes(true)
+        try {
+          const snapshot = await getDocs(collection(db, "pacientes"))
+          const data = snapshot.docs.map(doc => ({
+            id: doc.id,
+            ...doc.data()
+          })) as Paciente[]
+          setPacientes(data)
+        } catch (error) {
+          console.error("Error cargando pacientes:", error)
+        } finally {
+          setLoadingPacientes(false)
+        }
+      }
+    }
+    
+    fetchPacientes()
+  }, [showCreateModal, pacientes.length])
+
+  // Cargar paciente asociado
+  useEffect(() => {
+    const fetchPacienteAsociado = async () => {
+      if (showProfileModal && selectedUser?.tipo === "familiar" && selectedUser.paciente_id) {
+        setLoadingPaciente(true)
+        try {
+          const pacienteDoc = await getDoc(doc(db, "pacientes", selectedUser.paciente_id))
+          if (pacienteDoc.exists()) {
+            setPacienteAsociado({
+              id: pacienteDoc.id,
+              ...pacienteDoc.data()
+            } as Paciente)
+          }
+        } catch (error) {
+          console.error("Error cargando paciente:", error)
+        } finally {
+          setLoadingPaciente(false)
+        }
+      }
+    }
+    
+    fetchPacienteAsociado()
+  }, [showProfileModal, selectedUser])
+
+  // Manejar scroll con modales
   useEffect(() => {
     if (showCreateModal || showProfileModal) {
       document.body.style.overflow = "hidden"
@@ -81,12 +170,12 @@ const Familiares = () => {
       document.body.style.overflow = "unset"
     }
 
-    // Cleanup function para restaurar el scroll cuando el componente se desmonte
     return () => {
       document.body.style.overflow = "unset"
     }
   }, [showCreateModal, showProfileModal])
 
+  // Filtrar usuarios
   const filteredUsuarios = usuarios.filter((u) => {
     const matchesTipo =
       filterTipo === "todos" ||
@@ -99,40 +188,152 @@ const Familiares = () => {
     return matchesTipo && matchesSearch
   })
 
-  const handleCreateUser = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setCreating(true)
+const handleCreateUser = async (e: React.FormEvent) => {
+  e.preventDefault();
+  setCreating(true);
 
-    try {
-      const userData = {
-        ...newUser,
+  try {
+    const result = await apiCall('createUserHttp', {
+      nombre_completo: newUser.nombre_completo,
+      email: newUser.email,
+      telefono: newUser.telefono,
+      tipo: newUser.tipo,
+      password: newUser.password,
+      ...(newUser.paciente_id && { paciente_id: newUser.paciente_id })
+    });
+
+    if (result.success) {
+      // Agregar nuevo usuario a la lista
+      const nuevoUsuario: Usuario = {
+        id: result.userId, // Ahora es el mismo que auth_uid
+        nombre_completo: newUser.nombre_completo,
+        email: newUser.email,
+        telefono: newUser.telefono,
+        tipo: newUser.tipo,
         created_at: new Date().toLocaleDateString("es-MX"),
-        created_timestamp: new Date(),
-      }
+        auth_uid: result.authUid, // Mismo valor que id
+        ...(newUser.paciente_id && { paciente_id: newUser.paciente_id })
+      };
 
-      const docRef = await addDoc(collection(db, "users"), userData)
-      const newUserWithId = { id: docRef.id, ...userData }
-
-      setUsuarios((prev) => [newUserWithId, ...prev])
-      setShowCreateModal(false)
+      setUsuarios(prev => [nuevoUsuario, ...prev]);
+      setShowCreateModal(false);
+      
+      // Limpiar formulario
       setNewUser({
         nombre_completo: "",
         email: "",
         telefono: "",
         tipo: "familiar",
-      })
-    } catch (error) {
-      console.error("Error creating user:", error)
-    } finally {
-      setCreating(false)
+        password: "",
+      });
+
+      alert("Usuario creado exitosamente");
     }
-  }
 
-  const verPerfil = (usuario: Usuario) => {
-    setSelectedUser(usuario)
-    setShowProfileModal(true)
+  } catch (error: any) {
+    console.error("Error:", error);
+    alert(error.message || "Error al crear usuario");
+  } finally {
+    setCreating(false);
   }
+};
 
+// Función opcional para verificar un usuario
+const verifyUser = async (userId: string) => {
+  try {
+    const result = await apiCall('getUserHttp', { userId });
+    console.log('Verificación de usuario:', result);
+  } catch (error) {
+    console.error('Error verificando usuario:', error);
+  }
+};
+
+
+const testAuth = async () => {
+  try {
+    const result = await apiCall('testAuthHttp');
+    console.log("Auth test result:", result);
+    alert(`Autenticado: ${result.authenticated ? 'Sí' : 'No'}`);
+  } catch (error) {
+    console.error("Error:", error);
+    alert("Error en test");
+  }
+};
+
+// Función para probar con fetch directo
+const testAuthAlt = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      alert("No autenticado");
+      return;
+    }
+    
+    const token = await user.getIdToken(true);
+    console.log("Token para alt:", token.substring(0, 50));
+    
+    const response = await fetch(
+      'https://us-central1-anexodb-9f806.cloudfunctions.net/testAuthAlt',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ test: true })
+      }
+    );
+    
+    const data = await response.json();
+    console.log("Alt result:", data);
+    
+  } catch (error) {
+    console.error("Error alt:", error);
+  }
+};
+
+// Función para debug de Firebase SDK
+const debugFirebaseCall = async () => {
+  try {
+    const user = auth.currentUser;
+    if (!user) {
+      console.log("No user");
+      return;
+    }
+    
+    // Verificar la configuración de functions
+    console.log("Functions config:", {
+      app: functions.app.name,
+      region: functions._region,
+      // @ts-ignore
+      customDomain: functions._customDomain,
+      // @ts-ignore
+      useFetchImpl: functions._useFetchImpl
+    });
+    
+    // Intentar con diferentes configuraciones
+    const token = await user.getIdToken(true);
+    
+    // Opción 1: Con httpsCallable normal
+    console.log("=== Intento 1: Normal ===");
+    const fn1 = httpsCallable(functions, 'testAuth');
+    const r1 = await fn1({});
+    console.log("R1:", r1.data);
+    
+    // Opción 2: Con nueva instancia de functions
+    console.log("=== Intento 2: Nueva instancia ===");
+    const { getFunctions, httpsCallable: httpsCallable2 } = await import('firebase/functions');
+    const fn2Instance = getFunctions(app, 'us-central1');
+    const fn2 = httpsCallable2(fn2Instance, 'testAuth');
+    const r2 = await fn2({});
+    console.log("R2:", r2.data);
+    
+  } catch (error) {
+    console.error("Debug error:", error);
+  }
+};
+
+  // Funciones auxiliares
   const getRolColor = (rol: string) => {
     switch (rol) {
       case "admin":
@@ -168,6 +369,14 @@ const Familiares = () => {
       .toUpperCase()
   }
 
+  const verPerfil = (usuario: Usuario) => {
+    setSelectedUser(usuario)
+    setShowProfileModal(true)
+  }
+
+  // Funciones auxiliares
+
+
   return (
     <div className="p-6 max-w-7xl mx-auto">
       {/* Header */}
@@ -182,13 +391,27 @@ const Familiares = () => {
           <p className="text-gray-600 mt-2">Administra las cuentas registradas en el sistema</p>
         </div>
 
-        <Button
-          onClick={() => setShowCreateModal(true)}
-          className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700"
-        >
-          <Plus size={20} />
-          Nuevo Usuario
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700"
+          >
+            <Plus size={20} />
+            Nuevo Usuario
+          </Button>
+          
+          <Button onClick={testAuth} variant="outline">
+            Debug Auth
+          </Button>
+
+<Button onClick={testAuthAlt} variant="outline">
+  Test Auth Alt
+</Button>
+<Button onClick={debugFirebaseCall} variant="outline">
+  Debug Firebase
+</Button>
+         
+        </div>
       </div>
 
       {/* Filtros y búsqueda */}
@@ -409,6 +632,18 @@ const Familiares = () => {
               </div>
 
               <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Contraseña *</label>
+                <Input
+                  type="password"
+                  required
+                  value={newUser.password}
+                  onChange={(e) => setNewUser((prev) => ({ ...prev, password: e.target.value }))}
+                  placeholder="Ingresa una contraseña segura"
+                  className="w-full"
+                />
+              </div>
+
+              <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Teléfono</label>
                 <Input
                   type="tel"
@@ -424,9 +659,14 @@ const Familiares = () => {
                 <select
                   required
                   value={newUser.tipo}
-                  onChange={(e) =>
-                    setNewUser((prev) => ({ ...prev, tipo: e.target.value as "admin" | "medico" | "familiar" }))
-                  }
+                  onChange={(e) => {
+                    const tipo = e.target.value as "admin" | "medico" | "familiar"
+                    setNewUser((prev) => ({ 
+                      ...prev, 
+                      tipo,
+                      paciente_id: tipo === "familiar" ? prev.paciente_id : ""
+                    }))
+                  }}
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
                 >
                   <option value="familiar">Familiar</option>
@@ -434,6 +674,34 @@ const Familiares = () => {
                   <option value="admin">Administrador</option>
                 </select>
               </div>
+
+              {newUser.tipo === "familiar" && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Paciente Asociado *
+                  </label>
+                  {loadingPacientes ? (
+                    <div className="flex items-center justify-center p-4">
+                      <Loader className="animate-spin text-indigo-600" />
+                      <span className="ml-2">Cargando pacientes...</span>
+                    </div>
+                  ) : (
+                    <select
+                      required
+                      value={newUser.paciente_id || ""}
+                      onChange={(e) => setNewUser((prev) => ({ ...prev, paciente_id: e.target.value }))}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+                    >
+                      <option value="">Selecciona un paciente</option>
+                      {pacientes.map((paciente) => (
+                        <option key={paciente.id} value={paciente.id}>
+                          {paciente.nombre_completo} - {paciente.documento}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+              )}
 
               <div className="flex gap-3 pt-4">
                 <Button
@@ -456,155 +724,173 @@ const Familiares = () => {
 
       {/* Modal para ver perfil de usuario */}
       {showProfileModal && selectedUser && (
-       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-  <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
-    {/* Header del modal */}
-    <div className="flex items-center justify-between p-6 border-b border-gray-200">
-      <h2 className="text-xl font-semibold text-gray-900">Perfil de Usuario</h2>
-      <button
-        onClick={() => setShowProfileModal(false)}
-        className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
-      >
-        <X className="w-5 h-5 text-gray-500" />
-      </button>
-    </div>
-
-    {/* Contenido del perfil con scroll */}
-    <div className="overflow-y-auto p-5">
-      {/* Avatar y nombre principal */}
-      <div className="flex flex-col items-center text-center mb-4">
-        <div className="relative mb-3">
-          <div className="h-20 w-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
-            {getInitials(selectedUser.nombre_completo || "Usuario")}
-          </div>
-          <div
-            className={`absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-lg ${getRolColor(selectedUser.tipo)}`}
-          >
-            {getRolIcon(selectedUser.tipo)}
-          </div>
-        </div>
-
-        <h3 className="text-xl font-bold text-gray-900 mb-1">{selectedUser.nombre_completo}</h3>
-        <span
-          className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getRolColor(selectedUser.tipo)}`}
-        >
-          {getRolIcon(selectedUser.tipo)}
-          {selectedUser.tipo.charAt(0).toUpperCase() + selectedUser.tipo.slice(1)}
-        </span>
-      </div>
-
-      {/* Información de contacto */}
-      <div className="space-y-4">
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Mail className="w-4 h-4" />
-            Información de Contacto
-          </h4>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
-                <Mail className="w-3.5 h-3.5 text-blue-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Correo Electrónico</p>
-                <p className="text-sm font-medium text-gray-900">{selectedUser.email}</p>
-              </div>
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col">
+            <div className="flex items-center justify-between p-6 border-b border-gray-200">
+              <h2 className="text-xl font-semibold text-gray-900">Perfil de Usuario</h2>
+              <button
+                onClick={() => setShowProfileModal(false)}
+                className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="w-5 h-5 text-gray-500" />
+              </button>
             </div>
 
-            {selectedUser.telefono && (
-              <div className="flex items-center gap-3">
-                <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
-                  <Phone className="w-3.5 h-3.5 text-green-600" />
+            <div className="overflow-y-auto p-5">
+              <div className="flex flex-col items-center text-center mb-4">
+                <div className="relative mb-3">
+                  <div className="h-20 w-20 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-bold text-xl shadow-lg">
+                    {getInitials(selectedUser.nombre_completo || "Usuario")}
+                  </div>
+                  <div
+                    className={`absolute -bottom-1 -right-1 p-1.5 rounded-full bg-white shadow-lg ${getRolColor(selectedUser.tipo)}`}
+                  >
+                    {getRolIcon(selectedUser.tipo)}
+                  </div>
                 </div>
-                <div>
-                  <p className="text-xs text-gray-500 uppercase tracking-wide">Teléfono</p>
-                  <p className="text-sm font-medium text-gray-900">{selectedUser.telefono}</p>
+
+                <h3 className="text-xl font-bold text-gray-900 mb-1">{selectedUser.nombre_completo}</h3>
+                <span
+                  className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium ${getRolColor(selectedUser.tipo)}`}
+                >
+                  {getRolIcon(selectedUser.tipo)}
+                  {selectedUser.tipo.charAt(0).toUpperCase() + selectedUser.tipo.slice(1)}
+                </span>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <Mail className="w-4 h-4" />
+                    Información de Contacto
+                  </h4>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Mail className="w-3.5 h-3.5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Correo Electrónico</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedUser.email}</p>
+                      </div>
+                    </div>
+
+                    {selectedUser.telefono && (
+                      <div className="flex items-center gap-3">
+                        <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
+                          <Phone className="w-3.5 h-3.5 text-green-600" />
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 uppercase tracking-wide">Teléfono</p>
+                          <p className="text-sm font-medium text-gray-900">{selectedUser.telefono}</p>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {selectedUser.tipo === "familiar" && (
+                  <div className="bg-gray-50 rounded-lg p-4">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Paciente Asociado
+                    </h4>
+                    
+                    {loadingPaciente ? (
+                      <div className="flex items-center justify-center p-4">
+                        <Loader className="animate-spin text-indigo-600" />
+                        <span className="ml-2">Cargando paciente...</span>
+                      </div>
+                    ) : pacienteAsociado ? (
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+                            <User className="w-3.5 h-3.5 text-purple-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Nombre</p>
+                            <p className="text-sm font-medium text-gray-900">{pacienteAsociado.nombre_completo}</p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-3">
+                          <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
+                            <BadgeCheck className="w-3.5 h-3.5 text-indigo-600" />
+                          </div>
+                          <div>
+                            <p className="text-xs text-gray-500 uppercase tracking-wide">Documento</p>
+                            <p className="text-sm font-medium text-gray-900">{pacienteAsociado.documento}</p>
+                          </div>
+                        </div>
+                        
+                        {pacienteAsociado.telefono && (
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 bg-green-100 rounded-lg flex items-center justify-center">
+                              <Phone className="w-3.5 h-3.5 text-green-600" />
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 uppercase tracking-wide">Teléfono</p>
+                              <p className="text-sm font-medium text-gray-900">{pacienteAsociado.telefono}</p>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <p className="text-gray-500 text-sm">No se encontró paciente asociado</p>
+                    )}
+                  </div>
+                )}
+
+                <div className="bg-gray-50 rounded-lg p-4">
+                  <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                    <Calendar className="w-4 h-4" />
+                    Información del Sistema
+                  </h4>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <Calendar className="w-3.5 h-3.5 text-purple-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">Fecha de Registro</p>
+                        <p className="text-sm font-medium text-gray-900">{selectedUser.created_at}</p>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                      <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
+                        <User className="w-3.5 h-3.5 text-indigo-600" />
+                      </div>
+                      <div>
+                        <p className="text-xs text-gray-500 uppercase tracking-wide">ID de Usuario</p>
+                        <p className="text-sm font-medium text-gray-900 font-mono">{selectedUser.id}</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        {/* Información del sistema */}
-        <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-            <Calendar className="w-4 h-4" />
-            Información del Sistema
-          </h4>
-
-          <div className="space-y-3">
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 bg-purple-100 rounded-lg flex items-center justify-center">
-                <Calendar className="w-3.5 h-3.5 text-purple-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">Fecha de Registro</p>
-                <p className="text-sm font-medium text-gray-900">{selectedUser.created_at}</p>
-              </div>
             </div>
 
-            <div className="flex items-center gap-3">
-              <div className="w-7 h-7 bg-indigo-100 rounded-lg flex items-center justify-center">
-                <User className="w-3.5 h-3.5 text-indigo-600" />
-              </div>
-              <div>
-                <p className="text-xs text-gray-500 uppercase tracking-wide">ID de Usuario</p>
-                <p className="text-sm font-medium text-gray-900 font-mono">{selectedUser.id}</p>
+            <div className="px-5 py-4 bg-gray-50 rounded-b-xl border-t border-gray-200">
+              <div className="flex gap-3">
+                <Button variant="outline" onClick={() => setShowProfileModal(false)} className="flex-1">
+                  Cerrar
+                </Button>
+                <Button
+                  onClick={() => {
+                    console.log("Editar usuario:", selectedUser.id)
+                    setShowProfileModal(false)
+                  }}
+                  className="flex-1 bg-indigo-600 hover:bg-indigo-700"
+                >
+                  Editar Usuario
+                </Button>
               </div>
             </div>
           </div>
         </div>
-
-        {/* Estadísticas adicionales */}
-        <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 border border-indigo-100">
-          <div className="flex items-center justify-between">
-            <div className="text-center">
-              <p className="text-xl font-bold text-indigo-600">
-                {selectedUser.tipo === "familiar" ? "1" : selectedUser.tipo === "medico" ? "5+" : "10+"}
-              </p>
-              <p className="text-xs text-gray-600">
-                {selectedUser.tipo === "familiar"
-                  ? "Familiar"
-                  : selectedUser.tipo === "medico"
-                    ? "Pacientes"
-                    : "Usuarios"}
-              </p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-purple-600">{Math.floor(Math.random() * 30) + 1}</p>
-              <p className="text-xs text-gray-600">Días activo</p>
-            </div>
-            <div className="text-center">
-              <p className="text-xl font-bold text-green-600">
-                {selectedUser.tipo === "admin" ? "100%" : "95%"}
-              </p>
-              <p className="text-xs text-gray-600">Disponibilidad</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    {/* Footer del modal */}
-    <div className="px-5 py-4 bg-gray-50 rounded-b-xl border-t border-gray-200">
-      <div className="flex gap-3">
-        <Button variant="outline" onClick={() => setShowProfileModal(false)} className="flex-1">
-          Cerrar
-        </Button>
-        <Button
-          onClick={() => {
-            console.log("Editar usuario:", selectedUser.id)
-            setShowProfileModal(false)
-          }}
-          className="flex-1 bg-indigo-600 hover:bg-indigo-700"
-        >
-          Editar Usuario
-        </Button>
-      </div>
-    </div>
-  </div>
-</div>
       )}
     </div>
   )

@@ -1,0 +1,20 @@
+/* Asegurar que el tooltip esté siempre visible por encima de todo */
+.tooltip-portal {
+  z-index: 9999 !important;
+  pointer-events: none;
+}
+
+/* Mejorar la scrollbar en la navegación de tabs */
+.hide-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Asegurar que el contenedor de tabs no corte el tooltip */
+.tabs-container {
+  overflow: visible !important;
+}

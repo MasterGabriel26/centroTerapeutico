@@ -45,7 +45,7 @@ const RegistrarReingresoModal: React.FC<Props> = ({ pacienteId, onClose, onReing
   };
 
   return (
-    <Dialog isOpen={true} onClose={onClose} title="Registrar reingreso" size="md">
+    <Dialog isOpen={true} onClose={onClose} title="Registrar reingreso" size="xl">
       <div className="space-y-4">
         <Input
           label="Fecha de reingreso"
@@ -60,7 +60,7 @@ const RegistrarReingresoModal: React.FC<Props> = ({ pacienteId, onClose, onReing
           label="Motivo del reingreso"
           value={motivoIngreso}
           onChange={(e) => setMotivoIngreso(e.target.value)}
-          rows={4}
+          rows={24}
           required
         />
 

@@ -137,7 +137,7 @@ const PagosPage = () => {
 
         {/* TÍTULO */}
         <div className="mb-6">
-          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Pagos</h1>
+          <h1 className="text-xl sm:text-2xl font-bold text-gray-900">Cuentas de cobro</h1>
           <p className="text-sm sm:text-base text-gray-500">Historial de cuentas de cobro de todos los pacientes</p>
         </div>
 

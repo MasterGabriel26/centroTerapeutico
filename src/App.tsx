@@ -23,6 +23,7 @@ import { Activity } from 'lucide-react';
 import Familiares from './pages/Usuarios';
 import RegisterForm from './components/auth/RegisterForm';
 import Gastos from './pages/Gastos';
+import CrearPacientePage from './features/pacientes/pages/CrearPacientePage';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -48,7 +49,7 @@ const App: React.FC = () => {
         // Si el usuario no está autenticado y no está en login, redirigirlo a login
         if (location.pathname !== '/login' && location.pathname !== '/register') {
           navigate('/login');
-        }        
+        }
       }
     }
   }, [usuario, isLoading, location.pathname]);
@@ -71,7 +72,7 @@ const App: React.FC = () => {
       <Route path="/" element={<AuthLayout />}>
         <Route index element={<Navigate to="/login" replace />} />
         <Route path="login" element={<LoginForm />} />
-        <Route path="register" element={<RegisterForm />} /> 
+        <Route path="register" element={<RegisterForm />} />
       </Route>
 
       {/* Rutas protegidas */}
@@ -82,15 +83,18 @@ const App: React.FC = () => {
         }
       >
         <Route path="dashboard" element={<Dashboard />} />
-    
-           <Route path="pacientes" element={<PacientesList />} />
-           <Route path="cuentasDeCobro" element={<PagosPage/>} />
+
+        <Route path="pacientes" element={<PacientesList />} />
+        <Route path="pacientes/nuevo" element={<CrearPacientePage />} />
+        <Route path="pacientes/:id/editar" element={<CrearPacientePage />} />
+        <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
+
+        <Route path="cuentasDeCobro" element={<PagosPage />} />
         <Route path="familiares" element={<Familiares />} />
         <Route path="gastos" element={<Gastos />} />
         <Route path="pagos" element={<Pagos />} />
         <Route path="mi-familiar" element={<PacientePage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
-        <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
 
       </Route>
     </Routes>

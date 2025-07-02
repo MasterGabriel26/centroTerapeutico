@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Tabs, TabList, Tab, TabPanel } from "../../components/ui/Tabs";
+import { Tabs, TabList, TabPanel } from "../../components/ui/Tabs";
 import InfoGeneral from "./components/PacienteDetalleTabs/InfoGeneral";
 import FamiliaresTab from "./components/PacienteDetalleTabs/FamiliaresTab";
 import ImagenesTab from "./components/PacienteDetalleTabs/SeguimientoTab";
@@ -9,18 +9,36 @@ import NovedadesTab from "./components/PacienteDetalleTabs/NovedadesTab";
 import VisitasTab from "./components/PacienteDetalleTabs/VisitasTab";
 import { Paciente } from "./types/paciente";
 import { Button } from "../../components/ui/Button";
-import { User, ArrowLeft } from "lucide-react";
 import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale/es';
-
-
-
+import { 
+  User, 
+  Users, 
+  Activity, 
+  Pill, 
+  CreditCard, 
+  Building2, 
+  FileText,
+  Calendar,
+  ArrowLeft 
+} from 'lucide-react';
+import { TabWithTooltip } from "./components/TabWithTooltip";
 import imagenEjemplo from "./ejemplo1.jpg"
 import CuentasTab from "./components/PacienteDetalleTabs/CuentasTab";
 import IngresosTab from "./components/PacienteDetalleTabs/IngresosTab";
 
+// Configuración de tooltips para cada tab
+const TAB_TOOLTIPS = {
+  infoGeneral: "Información personal básica del paciente, datos de contacto y detalles médicos generales",
+  familiares: "Registro de familiares y personas de contacto del paciente, fundamental para el apoyo durante el tratamiento",
+  seguimiento: "Historial de progreso del paciente, evolución del tratamiento y notas de seguimiento médico",
+  recetas: "Prescripciones médicas, medicamentos recetados y tratamientos farmacológicos del paciente",
+  cuentas: "Gestión de pagos, facturación y estados de cuenta relacionados con el tratamiento",
+  internamientos: "Historial de hospitalizaciones, ingresos y egresos del centro de rehabilitación",
+  visitas: "Registro de visitas familiares, citas médicas y encuentros terapéuticos programados"
+};
 
 const PacienteDetallePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -135,22 +153,7 @@ const PacienteDetallePage: React.FC = () => {
                   alt={paciente.nombre_completo}
                   className="w-full h-full object-cover"
                 />
-                {/* {paciente.imagen_url ? (
-                  <img
-                    src={imagenEjemplo}
-                    alt={paciente.nombre_completo}
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-               
-                  <img
-                    src={imagenEjemplo}
-                    alt={paciente.nombre_completo}
-                    className="w-full h-full object-cover"
-                  />
-                )} */}
               </div>
-
             </div>
 
             <div className="flex-grow text-center md:text-left">
@@ -191,82 +194,73 @@ const PacienteDetallePage: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-100">
-          {/* Tabs Navigation */}
-          <div className="bg-gray-50 border-b border-gray-200 px-6">
-            <TabList
-              selectedIndex={tabIndex}
-              onSelect={setTabIndex}
-              className="flex overflow-x-auto hide-scrollbar"
-            >
-              <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 0
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Información General
-              </Tab>
-              <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 1
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Familiares
-              </Tab>
-              <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 2
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Seguimiento
-              </Tab>
-              <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 3
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Receta Médica
-              </Tab>
-              {/* <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 4
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Novedades
-              </Tab> */}
-              <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 4
-                    ? "border-blue-600 text-blue-700"
-                    : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Cuentas de cobro
-              </Tab>
-              <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 5
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Ingresos del paciente
-              </Tab>
+{/* Tabs Navigation */}
+<div className="bg-gray-50 border-b border-gray-200 px-6">
+  <div className="flex overflow-x-auto scrollbar-hide">
+    <TabWithTooltip
+      tooltip="Información personal básica del paciente, datos de contacto y detalles médicos generales"
+      isActive={tabIndex === 0}
+      onClick={() => setTabIndex(0)}
+      icon={FileText}
+    >
+      Información General
+    </TabWithTooltip>
 
-               <Tab
-                className={`py-4 px-4 flex items-center gap-2 font-medium border-b-2 whitespace-nowrap transition-all ${tabIndex === 6
-                  ? "border-blue-600 text-blue-700"
-                  : "border-transparent text-gray-500 hover:text-gray-800 hover:border-gray-200"
-                  }`}
-              >
-                Visitas
-              </Tab>
+    <TabWithTooltip
+      tooltip="Registro de familiares y personas de contacto del paciente, fundamental para el apoyo durante el tratamiento"
+      isActive={tabIndex === 1}
+      onClick={() => setTabIndex(1)}
+      icon={Users}
+    >
+      Familiares
+    </TabWithTooltip>
 
+    <TabWithTooltip
+      tooltip="Historial de progreso del paciente, evolución del tratamiento y notas de seguimiento médico"
+      isActive={tabIndex === 2}
+      onClick={() => setTabIndex(2)}
+      icon={Activity}
+    >
+      Seguimiento
+    </TabWithTooltip>
 
-            </TabList>
-          </div>
+    <TabWithTooltip
+      tooltip="Prescripciones médicas, medicamentos recetados y tratamientos farmacológicos del paciente"
+      isActive={tabIndex === 3}
+      onClick={() => setTabIndex(3)}
+      icon={Pill}
+    >
+      Receta Médica
+    </TabWithTooltip>
+
+    <TabWithTooltip
+      tooltip="Gestión de pagos, facturación y estados de cuenta relacionados con el tratamiento"
+      isActive={tabIndex === 4}
+      onClick={() => setTabIndex(4)}
+      icon={CreditCard}
+    >
+      Cuentas de cobro
+    </TabWithTooltip>
+
+    <TabWithTooltip
+      tooltip="Historial de hospitalizaciones, ingresos y egresos del centro de rehabilitación"
+      isActive={tabIndex === 5}
+      onClick={() => setTabIndex(5)}
+      icon={Building2}
+    >
+      Internamientos
+    </TabWithTooltip>
+
+    <TabWithTooltip
+      tooltip="Registro de visitas familiares, citas médicas y encuentros terapéuticos programados"
+      isActive={tabIndex === 6}
+      onClick={() => setTabIndex(6)}
+      icon={Calendar}
+    >
+      Visitas
+    </TabWithTooltip>
+  </div>
+</div>
 
           {/* Tab Content */}
           <div className="p-6">
@@ -283,9 +277,6 @@ const PacienteDetallePage: React.FC = () => {
               <TabPanel>
                 <RecetasTab pacienteId={paciente.id!} />
               </TabPanel>
-              {/* <TabPanel>
-                <NovedadesTab pacienteId={paciente.id!} />
-              </TabPanel> */}
               <TabPanel>
                 <CuentasTab pacienteId={paciente.id!} />
               </TabPanel>
@@ -298,7 +289,6 @@ const PacienteDetallePage: React.FC = () => {
               <TabPanel>
                 <VisitasTab pacienteId={paciente.id!} />
               </TabPanel>
-              
             </Tabs>
           </div>
         </div>

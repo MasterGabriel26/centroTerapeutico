@@ -4,29 +4,16 @@ import { Plus, Search } from "lucide-react";
 import { Button } from "../../components/ui/Button";
 import { Input } from "../../components/ui/Input";
 import DataTable, { Column } from "../../components/ui/DataTable";
-import CrearPacienteDialog from "./components/CrearPacienteDialog";
 import { Link } from "react-router-dom";
 import { Paciente } from "./types/paciente";
 import { getPacientes } from "./services/pacienteService";
 import { obtenerUltimoIngresoActivo } from "./services/ingresosService";
-import { usePacientes } from "./hooks/usePacientes";
 
 const PacientesList: React.FC = () => {
-  const { createPaciente, loading: creando } = usePacientes();
-  const [showNewDialog, setShowNewDialog] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [pacientes, setPacientes] = useState<Paciente[]>([]);
   const [loading, setLoading] = useState(false);
   const [filterEstado, setFilterEstado] = useState<"todos" | "activo" | "inactivo">("todos");
-
-  const handleCreatePaciente = async (data: Omit<Paciente, "id" | "creado" | "estado">) => {
-    const id = await createPaciente(data);
-    if (id) {
-      const nuevos = await getPacientes();
-      setPacientes(nuevos);
-      setShowNewDialog(false);
-    }
-  };
 
   useEffect(() => {
     const fetchPacientes = async () => {
@@ -119,12 +106,11 @@ const PacientesList: React.FC = () => {
           <h1 className="text-2xl font-bold text-gray-900">Pacientes</h1>
           <p className="text-gray-500">Gestión de personas en tratamiento</p>
         </div>
-        <Button
-          onClick={() => setShowNewDialog(true)}
-          className="bg-[#2A93C9] hover:bg-[#1B7CAD] text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-all"
-        >
-          <Plus size={18} /> Agregar Paciente
-        </Button>
+        <Link to="/pacientes/nuevo">
+          <Button className="bg-[#2A93C9] hover:bg-[#1B7CAD] text-white font-medium px-4 py-2 rounded-lg flex items-center gap-2 transition-all">
+            <Plus size={18} /> Agregar Paciente
+          </Button>
+        </Link>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm p-4 mb-6 flex flex-col md:flex-row items-center gap-4">
@@ -152,15 +138,6 @@ const PacientesList: React.FC = () => {
         data={filteredPacientes}
         loading={loading}
         emptyText="No hay pacientes registrados"
-      />
-
-      <CrearPacienteDialog
-        isOpen={showNewDialog}
-        onClose={() => setShowNewDialog(false)}
-        onPacienteCreado={async () => {
-          const nuevos = await getPacientes();
-          setPacientes(nuevos);
-        }}
       />
     </div>
   );

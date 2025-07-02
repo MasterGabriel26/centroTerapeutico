@@ -43,7 +43,7 @@ const IngresosTab: React.FC<Props> = ({ paciente, onReingreso }) => {
       <div className="flex items-center justify-between p-4 border-b border-gray-100 text-blue-700">
         <div className="flex items-center gap-2">
           <ClipboardList size={18} />
-          <h2 className="text-base font-semibold">Historial de Ingresos</h2>
+          <h2 className="text-base font-semibold">Historial de Internamientos</h2>
         </div>
 
         {!pacienteEstaIngresado && (

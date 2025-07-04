@@ -13,16 +13,16 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "../../utils/firebase";
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale/es';
-import { 
-  User, 
-  Users, 
-  Activity, 
-  Pill, 
-  CreditCard, 
-  Building2, 
+import {
+  User,
+  Users,
+  Activity,
+  Pill,
+  CreditCard,
+  Building2,
   FileText,
   Calendar,
-  ArrowLeft 
+  ArrowLeft
 } from 'lucide-react';
 import { TabWithTooltip } from "./components/TabWithTooltip";
 import imagenEjemplo from "./ejemplo1.jpg"
@@ -118,72 +118,76 @@ const PacienteDetallePage: React.FC = () => {
   }
 
   return (
+    // En la parte del header
     <div className="bg-gradient-to-b from-blue-50 to-white min-h-screen">
-      {/* Header */}
-      <div className=" text-white px-4 py-4 sm:px-6">
+      {/* Header mejorado */}
+      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center justify-between">
             <Button
               onClick={() => navigate('/pacientes')}
               variant="ghost"
-              className="bg-gradient-to-r from-blue-700 to-blue-900 text-white hover:bg-white/10 flex items-center gap-2"
+              className="text-gray-600 hover:text-gray-900 hover:bg-gray-100 flex items-center gap-2 p-2"
             >
-              <ArrowLeft size={18} />
-              <span className="hidden sm:inline">Volver a pacientes</span>
+              <ArrowLeft size={20} />
+              <span className="hidden sm:inline">Volver</span>
             </Button>
 
-            <h1 className="text-xl sm:text-2xl font-bold text-black text-center">
+            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
               Detalle del Paciente
             </h1>
 
-            <div className="invisible sm:hidden">Espacio</div>
+            {/* Espacio para balance visual */}
+            <div className="w-[60px] sm:w-[80px]"></div>
           </div>
         </div>
       </div>
 
-      {/* Paciente Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-100">
-          <div className="p-6 flex flex-col md:flex-row gap-8 items-center">
-            {/* Foto de perfil con más protagonismo */}
-            <div className="relative group">
-              <div className="w-32 h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-xl">
-                <img
-                  src={imagenEjemplo}
-                  alt={paciente.nombre_completo}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            </div>
-
-            <div className="flex-grow text-center md:text-left">
-              <div className="mb-4">
-                <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  {paciente.nombre_completo}
-                </h2>
-
-                <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                  <span className="bg-blue-100 text-blue-800 text-sm font-medium px-3 py-1 rounded-full">
-                    ID: {paciente.id}
-                  </span>
-                  <span className={`px-3 py-1 rounded-full text-sm font-medium ${paciente.estado === "activo"
-                    ? "bg-green-100 text-green-800"
-                    : "bg-gray-100 text-gray-800"
-                    }`}>
-                    {paciente.estado}
-                  </span>
+      {/* Paciente Header mejorado */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+        <div className="bg-white rounded-lg sm:rounded-2xl shadow-lg sm:shadow-xl overflow-hidden border border-blue-100">
+          <div className="p-4 sm:p-6">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-center">
+              {/* Foto de perfil responsiva */}
+              <div className="relative group flex-shrink-0">
+                <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+                  <img
+                    src={imagenEjemplo}
+                    alt={paciente.nombre_completo}
+                    className="w-full h-full object-cover"
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-w-2xl">
-                <div className="flex items-center justify-center md:justify-start gap-2 text-gray-600">
-                  <span className="font-medium">Ingreso:</span>
-                  <span>{formatDate(paciente.fecha_ingreso)}</span>
+              <div className="flex-grow text-center sm:text-left w-full">
+                <div className="mb-3 sm:mb-4">
+                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">
+                    {paciente.nombre_completo}
+                  </h2>
+
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3">
+                    <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-full">
+                      ID: {paciente.id}
+                    </span>
+                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${paciente.estado === "activo"
+                        ? "bg-green-100 text-green-800"
+                        : "bg-gray-100 text-gray-800"
+                      }`}>
+                      {paciente.estado}
+                    </span>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-center md:justify-start gap-2 text-gray-600">
-                  <span className="font-medium">Teléfono:</span>
-                  <span>{paciente.telefono || "No especificado"}</span>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-w-2xl">
+                  <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 text-sm sm:text-base">
+                    <span className="font-medium">Ingreso:</span>
+                    <span className="break-words">{formatDate(paciente.fecha_ingreso)}</span>
+                  </div>
+
+                  <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 text-sm sm:text-base">
+                    <span className="font-medium">Teléfono:</span>
+                    <span className="break-words">{paciente.telefono || "No especificado"}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -194,76 +198,89 @@ const PacienteDetallePage: React.FC = () => {
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
         <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-100">
-{/* Tabs Navigation */}
-<div className="bg-gray-50 border-b border-gray-200 px-6">
-  <div className="flex overflow-x-auto scrollbar-hide">
-    <TabWithTooltip
-      tooltip="Información personal básica del paciente, datos de contacto y detalles médicos generales"
-      isActive={tabIndex === 0}
-      onClick={() => setTabIndex(0)}
-      icon={FileText}
-    >
-      Información General
-    </TabWithTooltip>
+          {/* Tabs Navigation completamente responsiva */}
+          <div className="bg-gray-50 border-b border-gray-200">
+            <div className="flex overflow-x-auto scrollbar-hide px-2 sm:px-6">
+              <div className="flex space-x-1 sm:space-x-2 min-w-max">
+                <TabWithTooltip
+                  tooltip="Información personal básica del paciente, datos de contacto y detalles médicos generales"
+                  isActive={tabIndex === 0}
+                  onClick={() => setTabIndex(0)}
+                  icon={FileText}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  <span className="sm:hidden">Info</span>
+                  <span className="hidden sm:inline">Información General</span>
+                </TabWithTooltip>
 
-    <TabWithTooltip
-      tooltip="Registro de familiares y personas de contacto del paciente, fundamental para el apoyo durante el tratamiento"
-      isActive={tabIndex === 1}
-      onClick={() => setTabIndex(1)}
-      icon={Users}
-    >
-      Familiares
-    </TabWithTooltip>
+                <TabWithTooltip
+                  tooltip="Registro de familiares y personas de contacto del paciente"
+                  isActive={tabIndex === 1}
+                  onClick={() => setTabIndex(1)}
+                  icon={Users}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  Familiares
+                </TabWithTooltip>
 
-    <TabWithTooltip
-      tooltip="Historial de progreso del paciente, evolución del tratamiento y notas de seguimiento médico"
-      isActive={tabIndex === 2}
-      onClick={() => setTabIndex(2)}
-      icon={Activity}
-    >
-      Seguimiento
-    </TabWithTooltip>
+                <TabWithTooltip
+                  tooltip="Historial de progreso del paciente, evolución del tratamiento"
+                  isActive={tabIndex === 2}
+                  onClick={() => setTabIndex(2)}
+                  icon={Activity}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  Seguimiento
+                </TabWithTooltip>
 
-    <TabWithTooltip
-      tooltip="Prescripciones médicas, medicamentos recetados y tratamientos farmacológicos del paciente"
-      isActive={tabIndex === 3}
-      onClick={() => setTabIndex(3)}
-      icon={Pill}
-    >
-      Receta Médica
-    </TabWithTooltip>
+                <TabWithTooltip
+                  tooltip="Prescripciones médicas y medicamentos recetados"
+                  isActive={tabIndex === 3}
+                  onClick={() => setTabIndex(3)}
+                  icon={Pill}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  <span className="sm:hidden">Recetas</span>
+                  <span className="hidden sm:inline">Receta Médica</span>
+                </TabWithTooltip>
 
-    <TabWithTooltip
-      tooltip="Gestión de pagos, facturación y estados de cuenta relacionados con el tratamiento"
-      isActive={tabIndex === 4}
-      onClick={() => setTabIndex(4)}
-      icon={CreditCard}
-    >
-      Cuentas de cobro
-    </TabWithTooltip>
+                <TabWithTooltip
+                  tooltip="Gestión de pagos y facturación"
+                  isActive={tabIndex === 4}
+                  onClick={() => setTabIndex(4)}
+                  icon={CreditCard}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  <span className="sm:hidden">Cuentas</span>
+                  <span className="hidden sm:inline">Cuentas de cobro</span>
+                </TabWithTooltip>
 
-    <TabWithTooltip
-      tooltip="Historial de hospitalizaciones, ingresos y egresos del centro de rehabilitación"
-      isActive={tabIndex === 5}
-      onClick={() => setTabIndex(5)}
-      icon={Building2}
-    >
-      Internamientos
-    </TabWithTooltip>
+                <TabWithTooltip
+                  tooltip="Historial de hospitalizaciones e ingresos"
+                  isActive={tabIndex === 5}
+                  onClick={() => setTabIndex(5)}
+                  icon={Building2}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  <span className="sm:hidden">Ingresos</span>
+                  <span className="hidden sm:inline">Internamientos</span>
+                </TabWithTooltip>
 
-    <TabWithTooltip
-      tooltip="Registro de visitas familiares, citas médicas y encuentros terapéuticos programados"
-      isActive={tabIndex === 6}
-      onClick={() => setTabIndex(6)}
-      icon={Calendar}
-    >
-      Visitas
-    </TabWithTooltip>
-  </div>
-</div>
+                <TabWithTooltip
+                  tooltip="Registro de visitas familiares y citas médicas"
+                  isActive={tabIndex === 6}
+                  onClick={() => setTabIndex(6)}
+                  icon={Calendar}
+                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                >
+                  Visitas
+                </TabWithTooltip>
+              </div>
+            </div>
+          </div>
 
           {/* Tab Content */}
-          <div className="p-6">
+         <div className="p-4 sm:p-6">
             <Tabs selectedIndex={tabIndex} onSelect={setTabIndex}>
               <TabPanel>
                 <InfoGeneral paciente={paciente} />

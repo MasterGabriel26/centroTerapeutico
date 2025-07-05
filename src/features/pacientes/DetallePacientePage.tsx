@@ -29,17 +29,6 @@ import imagenEjemplo from "./ejemplo1.jpg"
 import CuentasTab from "./components/PacienteDetalleTabs/CuentasTab";
 import IngresosTab from "./components/PacienteDetalleTabs/IngresosTab";
 
-// Configuración de tooltips para cada tab
-const TAB_TOOLTIPS = {
-  infoGeneral: "Información personal básica del paciente, datos de contacto y detalles médicos generales",
-  familiares: "Registro de familiares y personas de contacto del paciente, fundamental para el apoyo durante el tratamiento",
-  seguimiento: "Historial de progreso del paciente, evolución del tratamiento y notas de seguimiento médico",
-  recetas: "Prescripciones médicas, medicamentos recetados y tratamientos farmacológicos del paciente",
-  cuentas: "Gestión de pagos, facturación y estados de cuenta relacionados con el tratamiento",
-  internamientos: "Historial de hospitalizaciones, ingresos y egresos del centro de rehabilitación",
-  visitas: "Registro de visitas familiares, citas médicas y encuentros terapéuticos programados"
-};
-
 const PacienteDetallePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const [paciente, setPaciente] = useState<Paciente | null>(null);
@@ -118,12 +107,11 @@ const PacienteDetallePage: React.FC = () => {
   }
 
   return (
-    // En la parte del header
-    <div className="bg-gradient-to-b from-blue-50 to-white min-h-screen">
-      {/* Header mejorado */}
-      <div className="bg-white shadow-sm border-b border-gray-200 px-4 py-3 sm:px-6 sm:py-4">
-        <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between">
+    <div className="bg-gray-50 min-h-screen">
+      {/* Header simplificado */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-16">
             <Button
               onClick={() => navigate('/pacientes')}
               variant="ghost"
@@ -133,24 +121,24 @@ const PacienteDetallePage: React.FC = () => {
               <span className="hidden sm:inline">Volver</span>
             </Button>
 
-            <h1 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900">
-              Detalle del Paciente
+            <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate max-w-xs sm:max-w-md md:max-w-2xl">
+              {paciente.nombre_completo}
             </h1>
 
-            {/* Espacio para balance visual */}
-            <div className="w-[60px] sm:w-[80px]"></div>
+            <div className="w-10"></div> {/* Espaciador para balance */}
           </div>
         </div>
       </div>
 
-      {/* Paciente Header mejorado */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
-        <div className="bg-white rounded-lg sm:rounded-2xl shadow-lg sm:shadow-xl overflow-hidden border border-blue-100">
+      {/* Contenido principal */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+        {/* Tarjeta de información del paciente */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden mb-6 border border-gray-200">
           <div className="p-4 sm:p-6">
-            <div className="flex flex-col sm:flex-row gap-4 sm:gap-8 items-center">
-              {/* Foto de perfil responsiva */}
-              <div className="relative group flex-shrink-0">
-                <div className="w-24 h-24 sm:w-32 sm:h-32 md:w-40 md:h-40 rounded-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-lg">
+            <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-center">
+              {/* Foto de perfil */}
+              <div className="relative flex-shrink-0">
+                <div className="w-20 h-20 sm:w-24 sm:h-24 md:w-28 md:h-28 rounded-full bg-gradient-to-br from-blue-100 to-blue-300 flex items-center justify-center overflow-hidden border-4 border-white shadow-md">
                   <img
                     src={imagenEjemplo}
                     alt={paciente.nombre_completo}
@@ -159,119 +147,118 @@ const PacienteDetallePage: React.FC = () => {
                 </div>
               </div>
 
-              <div className="flex-grow text-center sm:text-left w-full">
-                <div className="mb-3 sm:mb-4">
-                  <h2 className="text-xl sm:text-2xl md:text-3xl font-bold text-gray-900 mb-2 break-words">
+              {/* Información básica */}
+              <div className="flex-grow text-center sm:text-left">
+                <div className="mb-2">
+                  <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">
                     {paciente.nombre_completo}
                   </h2>
-
-                  <div className="flex flex-wrap justify-center sm:justify-start gap-2 sm:gap-3">
-                    <span className="bg-blue-100 text-blue-800 text-xs sm:text-sm font-medium px-2 sm:px-3 py-1 rounded-full">
+                  
+                  <div className="flex flex-wrap justify-center sm:justify-start gap-2">
+                    <span className="bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-0.5 rounded-full">
                       ID: {paciente.id}
                     </span>
-                    <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${paciente.estado === "activo"
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                      paciente.estado === "activo"
                         ? "bg-green-100 text-green-800"
                         : "bg-gray-100 text-gray-800"
-                      }`}>
+                    }`}>
                       {paciente.estado}
                     </span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 max-w-2xl">
-                  <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 text-sm sm:text-base">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm text-gray-600">
+                  <div className="flex items-center justify-center sm:justify-start gap-1">
                     <span className="font-medium">Ingreso:</span>
-                    <span className="break-words">{formatDate(paciente.fecha_ingreso)}</span>
+                    <span>{formatDate(paciente.fecha_ingreso)}</span>
                   </div>
-
-                  <div className="flex items-center justify-center sm:justify-start gap-2 text-gray-600 text-sm sm:text-base">
+                  <div className="flex items-center justify-center sm:justify-start gap-1">
                     <span className="font-medium">Teléfono:</span>
-                    <span className="break-words">{paciente.telefono || "No especificado"}</span>
+                    <span>{paciente.telefono || "No especificado"}</span>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 pb-10">
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-blue-100">
-          {/* Tabs Navigation completamente responsiva */}
-          <div className="bg-gray-50 border-b border-gray-200">
-            <div className="flex overflow-x-auto scrollbar-hide px-2 sm:px-6">
-              <div className="flex space-x-1 sm:space-x-2 min-w-max">
+        {/* Pestañas de navegación */}
+        <div className="bg-white rounded-xl shadow-sm overflow-hidden border border-gray-200">
+          {/* Navegación por pestañas - versión responsiva */}
+          <div className="border-b border-gray-200">
+            <div className="overflow-x-auto scrollbar-hide">
+              <div className="flex space-x-1 min-w-max px-2 sm:px-4">
                 <TabWithTooltip
-                  tooltip="Información personal básica del paciente, datos de contacto y detalles médicos generales"
+                  tooltip="Información general del paciente"
                   isActive={tabIndex === 0}
                   onClick={() => setTabIndex(0)}
                   icon={FileText}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
+                  <span className="hidden sm:inline">Información</span>
                   <span className="sm:hidden">Info</span>
-                  <span className="hidden sm:inline">Información General</span>
                 </TabWithTooltip>
 
                 <TabWithTooltip
-                  tooltip="Registro de familiares y personas de contacto del paciente"
+                  tooltip="Familiares y contactos"
                   isActive={tabIndex === 1}
                   onClick={() => setTabIndex(1)}
                   icon={Users}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
                   Familiares
                 </TabWithTooltip>
 
                 <TabWithTooltip
-                  tooltip="Historial de progreso del paciente, evolución del tratamiento"
+                  tooltip="Seguimiento médico"
                   isActive={tabIndex === 2}
                   onClick={() => setTabIndex(2)}
                   icon={Activity}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
-                  Seguimiento
+                  <span className="hidden sm:inline">Seguimiento</span>
+                  <span className="sm:hidden">Seg.</span>
                 </TabWithTooltip>
 
                 <TabWithTooltip
-                  tooltip="Prescripciones médicas y medicamentos recetados"
+                  tooltip="Recetas médicas"
                   isActive={tabIndex === 3}
                   onClick={() => setTabIndex(3)}
                   icon={Pill}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
-                  <span className="sm:hidden">Recetas</span>
-                  <span className="hidden sm:inline">Receta Médica</span>
+                  Recetas
                 </TabWithTooltip>
 
                 <TabWithTooltip
-                  tooltip="Gestión de pagos y facturación"
+                  tooltip="Cuentas y pagos"
                   isActive={tabIndex === 4}
                   onClick={() => setTabIndex(4)}
                   icon={CreditCard}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
-                  <span className="sm:hidden">Cuentas</span>
-                  <span className="hidden sm:inline">Cuentas de cobro</span>
+                  <span className="hidden sm:inline">Cuentas</span>
+                  <span className="sm:hidden">Ctás.</span>
                 </TabWithTooltip>
 
                 <TabWithTooltip
-                  tooltip="Historial de hospitalizaciones e ingresos"
+                  tooltip="Internamientos"
                   isActive={tabIndex === 5}
                   onClick={() => setTabIndex(5)}
                   icon={Building2}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
-                  <span className="sm:hidden">Ingresos</span>
-                  <span className="hidden sm:inline">Internamientos</span>
+                  <span className="hidden sm:inline">Ingresos</span>
+                  <span className="sm:hidden">Int.</span>
                 </TabWithTooltip>
 
                 <TabWithTooltip
-                  tooltip="Registro de visitas familiares y citas médicas"
+                  tooltip="Visitas programadas"
                   isActive={tabIndex === 6}
                   onClick={() => setTabIndex(6)}
                   icon={Calendar}
-                  className="whitespace-nowrap text-xs sm:text-sm px-2 sm:px-4 py-2 sm:py-3"
+                  className="px-3 py-2 text-xs sm:text-sm"
                 >
                   Visitas
                 </TabWithTooltip>
@@ -279,8 +266,8 @@ const PacienteDetallePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Tab Content */}
-         <div className="p-4 sm:p-6">
+          {/* Contenido de las pestañas */}
+          <div className="p-4 sm:p-6">
             <Tabs selectedIndex={tabIndex} onSelect={setTabIndex}>
               <TabPanel>
                 <InfoGeneral paciente={paciente} />

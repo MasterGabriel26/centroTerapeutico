@@ -14,6 +14,7 @@ import PacienteDetallePage from './features/pacientes/DetallePacientePage';
 import Dashboard from './pages/Dashboard';
 import Pacientes from './pages/Pacientes';
 import RegistroDiario from './pages/Gastos';
+import InventarioMedicamentos from './features/medicamentos/pages/inventarioMedicamentos';
 import Pagos from './pages/Pagos';
 import PacientePage from './pages/FamiliarView';
 import PacientesList from '../src/features/pacientes/PacientesPage'; // Asegúrate de que la ruta sea correcta
@@ -88,7 +89,7 @@ const App: React.FC = () => {
         <Route path="pacientes/nuevo" element={<CrearPacientePage />} />
         <Route path="pacientes/:id/editar" element={<CrearPacientePage />} />
         <Route path="/pacientes/:id" element={<PacienteDetallePage />} />
-
+<Route path="medicamentos" element={<InventarioMedicamentos />} />
         <Route path="cuentasDeCobro" element={<PagosPage />} />
         <Route path="familiares" element={<Familiares />} />
         <Route path="gastos" element={<Gastos />} />

@@ -240,6 +240,7 @@ const handleLogoutClick = () => {
                 <NavItem to="/familiares" icon={<PersonStandingIcon />} label="Usuarios" />
                 <NavItem to="/gastos" icon={<ClipboardList />} label="Gastos" />
                 <NavItem to="cuentasDeCobro" icon={<ClipboardList size={20} />} label="Cuentas de cobro" />
+                 <NavItem to="/medicamentos" icon={<ClipboardList />} label="Medicamentos" />
               </>
             )}
             {isFamiliar && <NavItem to="/mi-familiar" icon={<UserIcon />} label="Mi Familiar" />}

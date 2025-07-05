@@ -3,9 +3,10 @@ import { Plus, Trash2, Pill, User, Loader2, Eye, ChevronDown, ChevronUp, Search,
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import { useRecetas } from "../../hooks/useRecetas";
-import { Receta, Medicamento } from "../../types/receta";
+import { useMedicamentos } from "../../../medicamentos/hooks/useMedicamentos";
+import { Receta, MedicamentoReceta } from "../../types/receta";
 import { useAuthStore } from "../../../../store/authStore";
-import { getDoc, doc } from "firebase/firestore";
+import { getDoc, doc, increment, runTransaction, collection } from "firebase/firestore";
 import { db } from "../../../../utils/firebase";
 
 const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
@@ -18,22 +19,26 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     cargarRecetas, 
     crearReceta,
     actualizarReceta,
-    totalGastado
+    totalGastado,
+    obtenerMedicamentosUnicos
   } = useRecetas(pacienteId);
+
+  const { medicamentos: todosMedicamentos, getMedicamentoById } = useMedicamentos();
   
   const [openModal, setOpenModal] = useState(false);
   const [motivo, setMotivo] = useState("");
-  const [medicamentos, setMedicamentos] = useState<Medicamento[]>([]);
-  const [currentMedicamento, setCurrentMedicamento] = useState<Medicamento>({
-    nombre: "",
-    uso: "",
+  const [medicamentosReceta, setMedicamentosReceta] = useState<MedicamentoReceta[]>([]);
+  const [currentMedicamento, setCurrentMedicamento] = useState<{
+    medicamentoId: string;
+    posologia: string;
+    tiempoUso: string;
+    cantidad: number;
+    notasAdicionales: string;
+  }>({
+    medicamentoId: "",
     posologia: "",
     tiempoUso: "",
-    cantidadPorCaja: 0,
-    cajas: 0,
-    costoPorCaja: 0,
-    subtotal: 0,
-    contraindicaciones: "",
+    cantidad: 1,
     notasAdicionales: ""
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -45,6 +50,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("active");
+  const [medicamentosDisponibles, setMedicamentosDisponibles] = useState<{id: string, nombre: string}[]>([]);
 
   // Cargar recetas al montar el componente
   useEffect(() => {
@@ -85,8 +91,18 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     }
   }, [recetas]);
 
-
+  // Cargar medicamentos disponibles
+useEffect(() => {
+  const medicamentosIds = obtenerMedicamentosUnicos();
+  const disponibles = medicamentosIds.map(id => {
+    const med = getMedicamentoById(id);
+    return med ? { id, nombre: med.nombre } : null;
+  }).filter(Boolean) as {id: string, nombre: string}[];
   
+  setMedicamentosDisponibles(disponibles);
+}, [todosMedicamentos, obtenerMedicamentosUnicos, getMedicamentoById]);
+
+
   // Filtrar recetas según término de búsqueda y estado
   const filteredRecetas = useMemo(() => {
     return recetas.filter(receta => {
@@ -97,11 +113,12 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
         const term = searchTerm.toLowerCase();
         const matchesMotivo = receta.motivo.toLowerCase().includes(term);
         const matchesDoctor = (doctoresInfo[receta.idDoctor] || "").toLowerCase().includes(term);
-        const matchesMedicamento = receta.medicamentos.some(m => 
-          m.nombre.toLowerCase().includes(term) || 
-          m.posologia.toLowerCase().includes(term) ||
-          m.uso?.toLowerCase().includes(term)
-        );
+        const matchesMedicamento = receta.medicamentos.some(m => {
+          return (
+            m.nombre.toLowerCase().includes(term) || 
+            m.posologia.toLowerCase().includes(term)
+          );
+        });
         
         return matchesMotivo || matchesDoctor || matchesMedicamento;
       }
@@ -112,53 +129,59 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
 
   const resetForm = useCallback(() => {
     setMotivo("");
-    setMedicamentos([]);
+    setMedicamentosReceta([]);
     setCurrentMedicamento({
-      nombre: "",
-      uso: "",
+      medicamentoId: "",
       posologia: "",
       tiempoUso: "",
-      cantidadPorCaja: 0,
-      cajas: 0,
-      costoPorCaja: 0,
-      subtotal: 0,
-      contraindicaciones: "",
+      cantidad: 1,
       notasAdicionales: ""
     });
     setFormError(null);
   }, []);
 
-  const handleAddMedicamento = useCallback(() => {
-    if (!currentMedicamento.nombre.trim() || !currentMedicamento.posologia.trim()) {
-      setFormError("Nombre y posología son campos obligatorios");
-      return;
-    }
-    
-    // Calcular subtotal
-    const subtotal = currentMedicamento.cajas * currentMedicamento.costoPorCaja;
-    
-    setMedicamentos(prev => [...prev, {
-      ...currentMedicamento,
-      subtotal
-    }]);
-    
-    setCurrentMedicamento({
-      nombre: "",
-      uso: "",
-      posologia: "",
-      tiempoUso: "",
-      cantidadPorCaja: 0,
-      cajas: 0,
-      costoPorCaja: 0,
-      subtotal: 0,
-      contraindicaciones: "",
-      notasAdicionales: ""
-    });
-    setFormError(null);
-  }, [currentMedicamento]);
+// En el handleAddMedicamento
+const handleAddMedicamento = useCallback(() => {
+  if (!currentMedicamento.medicamentoId || !currentMedicamento.posologia.trim()) {
+    setFormError("Debes seleccionar un medicamento y especificar la posología");
+    return;
+  }
+  
+  const medicamentoInfo = getMedicamentoById(currentMedicamento.medicamentoId);
+  if (!medicamentoInfo) {
+    setFormError("Medicamento no encontrado");
+    return;
+  }
+  
+  if (medicamentoInfo.stock < currentMedicamento.cantidad) {
+    setFormError(`No hay suficiente stock de ${medicamentoInfo.nombre}. Stock disponible: ${medicamentoInfo.stock}`);
+    return;
+  }
 
-  const handleRemoveMedicamento = useCallback((index: number) => {
-    setMedicamentos(prev => prev.filter((_, i) => i !== index));
+  const precioUnitario = Number(medicamentoInfo.precioVenta) || 0;
+  const subtotal = precioUnitario * currentMedicamento.cantidad;
+  
+  setMedicamentosReceta(prev => [...prev, {
+    ...currentMedicamento,
+    nombre: medicamentoInfo.nombre,
+    precioUnitario: precioUnitario,
+    subtotal: subtotal
+  }]);
+  
+  // Restablecer el formulario
+  setCurrentMedicamento({
+    medicamentoId: "",
+    posologia: "",
+    tiempoUso: "",
+    cantidad: 1,
+    notasAdicionales: ""
+  });
+  setFormError(null);
+}, [currentMedicamento, getMedicamentoById]);
+
+
+const handleRemoveMedicamento = useCallback((index: number) => {
+    setMedicamentosReceta(prev => prev.filter((_, i) => i !== index));
   }, []);
 
   const handleSubmit = useCallback(async () => {
@@ -172,7 +195,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
       return;
     }
     
-    if (medicamentos.length === 0) {
+    if (medicamentosReceta.length === 0) {
       setFormError("Debe agregar al menos un medicamento");
       return;
     }
@@ -181,25 +204,69 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
     setFormError(null);
     
     try {
-      const total = medicamentos.reduce((sum, med) => sum + (med.subtotal || 0), 0);
-      
-      await crearReceta({ 
-        idDoctor: doctor.id, 
-        motivo, 
-        medicamentos,
-        total,
-        isActive: true 
+      // Calcular el total
+      const total = medicamentosReceta.reduce((sum, med) => sum + (med.subtotal || 0), 0);
+
+      // Usar transacción para asegurar la integridad de los datos
+      await runTransaction(db, async (transaction) => {
+        // 1. Verificar stock y preparar actualizaciones
+        const updates = [];
+        for (const med of medicamentosReceta) {
+          const medRef = doc(db, "medicamentos", med.medicamentoId);
+          const medDoc = await transaction.get(medRef);
+          
+          if (!medDoc.exists()) {
+            throw new Error(`Medicamento ${med.medicamentoId} no encontrado`);
+          }
+          
+          const currentStock = medDoc.data().stock;
+          if (currentStock < med.cantidad) {
+            throw new Error(`No hay suficiente stock de ${med.nombre}. Stock disponible: ${currentStock}`);
+          }
+          
+          // Preparar actualización de stock
+          updates.push({
+            ref: medRef,
+            newStock: currentStock - med.cantidad
+          });
+        }
+
+        // 2. Aplicar todas las actualizaciones de stock
+        for (const update of updates) {
+          transaction.update(update.ref, { stock: update.newStock });
+        }
+
+        // 3. Crear la receta
+        const recetaRef = doc(collection(db, `pacientes/${pacienteId}/recetas`));
+        transaction.set(recetaRef, {
+          idDoctor: doctor.id,
+          motivo,
+          medicamentos: medicamentosReceta.map(med => ({
+            medicamentoId: med.medicamentoId,
+            nombre: med.nombre,
+            posologia: med.posologia,
+            tiempoUso: med.tiempoUso,
+            cantidad: med.cantidad,
+            precioUnitario: med.precioUnitario,
+            subtotal: med.subtotal,
+            notasAdicionales: med.notasAdicionales
+          })),
+          total,
+          isActive: true,
+          fecha: new Date()
+        });
       });
+
       setOpenModal(false);
       resetForm();
-      cargarRecetas();
+      await cargarRecetas();
     } catch (err) {
-      setFormError("Error al crear la receta");
+      setFormError(err instanceof Error ? err.message : "Error al crear la receta");
       console.error(err);
     } finally {
       setIsSubmitting(false);
     }
-  }, [doctor, motivo, medicamentos, crearReceta, cargarRecetas, resetForm]);
+  }, [doctor, motivo, medicamentosReceta, pacienteId, cargarRecetas, resetForm]);
 
   const formatDate = useCallback((date?: Date) => {
     if (!date) return 'Fecha no disponible';
@@ -342,12 +409,12 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
             <div className="flex justify-between items-center mb-3">
               <h3 className="font-medium text-gray-700">Medicamentos <span className="text-red-500">*</span></h3>
               <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">
-                {medicamentos.length} {medicamentos.length === 1 ? 'medicamento' : 'medicamentos'}
+                {medicamentosReceta.length} {medicamentosReceta.length === 1 ? 'medicamento' : 'medicamentos'}
               </span>
             </div>
             
             {/* Lista de medicamentos */}
-            {medicamentos.length > 0 && (
+            {medicamentosReceta.length > 0 && (
               <div className="mb-4 border rounded-lg overflow-hidden">
                 <table className="w-full text-sm">
                   <thead className="bg-gray-50">
@@ -359,11 +426,10 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
                     </tr>
                   </thead>
                   <tbody>
-                    {medicamentos.map((med, index) => (
+                    {medicamentosReceta.map((med, index) => (
                       <tr key={index} className="border-t hover:bg-gray-50">
                         <td className="py-2 px-3">
                           <div className="font-medium">{med.nombre}</div>
-                          {med.uso && <div className="text-xs text-gray-500">{med.uso}</div>}
                         </td>
                         <td className="py-2 px-3">
                           <div>{med.posologia}</div>
@@ -392,18 +458,28 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
             <div className="space-y-3 bg-gray-50 p-3 rounded-lg">
               <div className="grid grid-cols-1 gap-3">
                 <div>
-                  <label htmlFor="medNombre" className="block text-xs font-medium text-gray-600 mb-1">
-                    Nombre del medicamento <span className="text-red-500">*</span>
+                  <label htmlFor="medicamentoId" className="block text-xs font-medium text-gray-600 mb-1">
+                    Seleccionar medicamento <span className="text-red-500">*</span>
                   </label>
-                  <input
-                    type="text"
-                    id="medNombre"
-                    value={currentMedicamento.nombre}
-                    onChange={(e) => setCurrentMedicamento({...currentMedicamento, nombre: e.target.value})}
+                  <select
+                    id="medicamentoId"
+                    value={currentMedicamento.medicamentoId}
+                    onChange={(e) => setCurrentMedicamento({
+                      ...currentMedicamento,
+                      medicamentoId: e.target.value
+                    })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                    placeholder="Ej: Amoxicilina"
                     required
-                  />
+                  >
+                    <option value="">Seleccione un medicamento</option>
+                    {todosMedicamentos
+                      .filter(med => med.estado === 'activo')
+                      .map(med => (
+                        <option key={med.id} value={med.id || ''}>
+                          {med.nombre} ({med.presentacion}) - ${med.precioVenta} (Stock: {med.stock})
+                        </option>
+                      ))}
+                  </select>
                 </div>
 
                 <div>
@@ -414,7 +490,10 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
                     type="text"
                     id="medPosologia"
                     value={currentMedicamento.posologia}
-                    onChange={(e) => setCurrentMedicamento({...currentMedicamento, posologia: e.target.value})}
+                    onChange={(e) => setCurrentMedicamento({
+                      ...currentMedicamento, 
+                      posologia: e.target.value
+                    })}
                     className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                     placeholder="Ej: 500mg cada 8 horas"
                     required
@@ -423,20 +502,6 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
 
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label htmlFor="medUso" className="block text-xs font-medium text-gray-600 mb-1">
-                      Uso
-                    </label>
-                    <input
-                      type="text"
-                      id="medUso"
-                      value={currentMedicamento.uso}
-                      onChange={(e) => setCurrentMedicamento({...currentMedicamento, uso: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                      placeholder="Ej: Analgésico, antiinflamatorio"
-                    />
-                  </div>
-
-                  <div>
                     <label htmlFor="medTiempoUso" className="block text-xs font-medium text-gray-600 mb-1">
                       Tiempo de uso
                     </label>
@@ -444,97 +509,48 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
                       type="text"
                       id="medTiempoUso"
                       value={currentMedicamento.tiempoUso}
-                      onChange={(e) => setCurrentMedicamento({...currentMedicamento, tiempoUso: e.target.value})}
+                      onChange={(e) => setCurrentMedicamento({
+                        ...currentMedicamento, 
+                        tiempoUso: e.target.value
+                      })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
                       placeholder="Ej: 7 días"
                     />
                   </div>
-                </div>
 
-                <div className="grid grid-cols-3 gap-3">
                   <div>
                     <label htmlFor="medCantidad" className="block text-xs font-medium text-gray-600 mb-1">
-                      Cantidad/caja
+                      Cantidad
                     </label>
                     <input
                       type="number"
                       id="medCantidad"
-                      value={currentMedicamento.cantidadPorCaja || ""}
+                      value={currentMedicamento.cantidad}
                       onChange={(e) => setCurrentMedicamento({
                         ...currentMedicamento, 
-                        cantidadPorCaja: Number(e.target.value) || 0
+                        cantidad: Number(e.target.value) || 1
                       })}
                       className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="medCajas" className="block text-xs font-medium text-gray-600 mb-1">
-                      Cajas
-                    </label>
-                    <input
-                      type="number"
-                      id="medCajas"
-                      value={currentMedicamento.cajas || ""}
-                      onChange={(e) => setCurrentMedicamento({
-                        ...currentMedicamento, 
-                        cajas: Number(e.target.value) || 0,
-                        subtotal: (Number(e.target.value) || 0) * currentMedicamento.costoPorCaja
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="medCosto" className="block text-xs font-medium text-gray-600 mb-1">
-                      Costo/caja
-                    </label>
-                    <input
-                      type="number"
-                      id="medCosto"
-                      value={currentMedicamento.costoPorCaja || ""}
-                      onChange={(e) => setCurrentMedicamento({
-                        ...currentMedicamento, 
-                        costoPorCaja: Number(e.target.value) || 0,
-                        subtotal: currentMedicamento.cajas * (Number(e.target.value) || 0)
-                      })}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                      min="0"
-                      step="0.01"
+                      min="1"
                     />
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-3">
-                  <div>
-                    <label htmlFor="medContra" className="block text-xs font-medium text-gray-600 mb-1">
-                      Contraindicaciones
-                    </label>
-                    <textarea
-                      id="medContra"
-                      value={currentMedicamento.contraindicaciones}
-                      onChange={(e) => setCurrentMedicamento({...currentMedicamento, contraindicaciones: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                      placeholder="Ej: No usar en caso de embarazo"
-                      rows={2}
-                    />
-                  </div>
-
-                  <div>
-                    <label htmlFor="medNotas" className="block text-xs font-medium text-gray-600 mb-1">
-                      Notas adicionales
-                    </label>
-                    <textarea
-                      id="medNotas"
-                      value={currentMedicamento.notasAdicionales}
-                      onChange={(e) => setCurrentMedicamento({...currentMedicamento, notasAdicionales: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
-                      placeholder="Observaciones importantes"
-                      rows={2}
-                    />
-                  </div>
+                <div>
+                  <label htmlFor="medNotas" className="block text-xs font-medium text-gray-600 mb-1">
+                    Notas adicionales
+                  </label>
+                  <textarea
+                    id="medNotas"
+                    value={currentMedicamento.notasAdicionales}
+                    onChange={(e) => setCurrentMedicamento({
+                      ...currentMedicamento, 
+                      notasAdicionales: e.target.value
+                    })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm"
+                    placeholder="Observaciones importantes"
+                    rows={2}
+                  />
                 </div>
               </div>
 
@@ -542,6 +558,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
                 type="button"
                 variant="secondary"
                 onClick={handleAddMedicamento}
+                disabled={!currentMedicamento.medicamentoId || !currentMedicamento.posologia}
                 className="w-full py-2 text-sm flex items-center justify-center gap-2"
               >
                 <Plus size={14} />
@@ -555,7 +572,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium">Total estimado:</span>
               <span className="text-lg font-bold">
-                ${medicamentos.reduce((sum, med) => sum + (med.subtotal || 0), 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
+                ${medicamentosReceta.reduce((sum, med) => sum + (med.subtotal || 0), 0).toLocaleString('es-MX', { minimumFractionDigits: 2 })}
               </span>
             </div>
           </div>
@@ -576,7 +593,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
             <Button
               variant="primary"
               onClick={handleSubmit}
-              disabled={isSubmitting || medicamentos.length === 0}
+              disabled={isSubmitting || medicamentosReceta.length === 0}
               className="text-sm px-4 py-2"
             >
               {isSubmitting ? (
@@ -831,24 +848,18 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
                     <div className="flex justify-between items-start mb-2">
                       <div>
                         <p className="font-medium">{med.nombre}</p>
-                        {med.uso && <p className="text-sm text-gray-600">{med.uso}</p>}
                       </div>
                       <div className="text-right">
                         <p className="font-medium">
                           ${med.subtotal?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) || '0.00'}
                         </p>
                         <p className="text-xs text-gray-500">
-                          {med.cajas} caja(s) x ${med.costoPorCaja?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) || '0.00'}
+                          {med.cantidad} unidad(es) x ${med.precioUnitario?.toLocaleString('es-MX', { minimumFractionDigits: 2 }) || '0.00'}
                         </p>
                       </div>
                     </div>
                     <p className="text-sm mb-1"><span className="font-medium">Posología:</span> {med.posologia}</p>
                     {med.tiempoUso && <p className="text-sm mb-1"><span className="font-medium">Duración:</span> {med.tiempoUso}</p>}
-                    {med.contraindicaciones && (
-                      <p className="text-sm text-red-600 mt-2">
-                        <span className="font-medium">Contraindicaciones:</span> {med.contraindicaciones}
-                      </p>
-                    )}
                     {med.notasAdicionales && (
                       <p className="text-sm text-gray-600 mt-1">
                         <span className="font-medium">Notas:</span> {med.notasAdicionales}

@@ -25,8 +25,11 @@ export const useRecetas = (pacienteId: string) => {
       
       setRecetas(lista);
       
-      // Calcular el total gastado en todas las recetas
-      const gastoTotal = lista.reduce((sum, receta) => sum + (receta.total || 0), 0);
+      // Calcular el total gastado solo en recetas activas
+      const gastoTotal = lista
+        .filter(receta => receta.isActive) // Filtrar solo recetas activas
+        .reduce((sum, receta) => sum + (receta.total || 0), 0);
+      
       setTotalGastado(gastoTotal);
     } catch (err) {
       setError('Error al cargar recetas');
@@ -56,17 +59,13 @@ export const useRecetas = (pacienteId: string) => {
     }
   }, [pacienteId, cargarRecetas]);
 
-  const crearReceta = useCallback(async (data: Omit<Receta, 'id' | 'fecha' | 'total'>) => {
+  const crearReceta = useCallback(async (data: Omit<Receta, 'id' | 'fecha' | 'total' | 'isActive'>) => {
     try {
       setLoading(true);
       setError(null);
       
-      // Calcular el total antes de enviar
-      const total = data.medicamentos.reduce((sum, med) => sum + (med.subtotal || 0), 0);
-      
       await addReceta(pacienteId, {
         ...data,
-        total,
         fecha: new Date(),
         isActive: true
       });
@@ -75,6 +74,7 @@ export const useRecetas = (pacienteId: string) => {
     } catch (err) {
       setError('Error al crear receta');
       console.error(err);
+      throw err; // Re-lanzamos el error para que pueda ser manejado por el componente
     } finally {
       setLoading(false);
     }
@@ -83,9 +83,21 @@ export const useRecetas = (pacienteId: string) => {
   const filtrarRecetasPorMedicamento = useCallback((nombreMedicamento: string) => {
     return recetas.filter(receta => 
       receta.medicamentos.some(med => 
-        med.nombre.toLowerCase().includes(nombreMedicamento.toLowerCase())
+        med.nombre?.toLowerCase().includes(nombreMedicamento.toLowerCase())
       )
     );
+  }, [recetas]);
+
+  const obtenerMedicamentosUnicos = useCallback(() => {
+    const medicamentosIds = new Set<string>();
+    recetas.forEach(receta => {
+      receta.medicamentos.forEach(med => {
+        if (med.medicamentoId) {
+          medicamentosIds.add(med.medicamentoId);
+        }
+      });
+    });
+    return Array.from(medicamentosIds);
   }, [recetas]);
 
   return {
@@ -96,6 +108,7 @@ export const useRecetas = (pacienteId: string) => {
     cargarRecetas,
     crearReceta,
     actualizarReceta,
-    filtrarRecetasPorMedicamento
+    filtrarRecetasPorMedicamento,
+    obtenerMedicamentosUnicos
   };
 };

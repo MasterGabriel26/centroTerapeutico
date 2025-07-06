@@ -129,16 +129,33 @@ const getMedicamentoById = useCallback((id: string): Medicamento | null => {
     cargarMedicamentos();
   }, [cargarMedicamentos]);
 
-  return {
-    medicamentos,
-    caducados,
-    loading,
-    error,
-    cargarMedicamentos,
-    buscarMedicamentos,
-    agregarMedicamento,
-    editarMedicamento,
-    getMedicamentoById,
-    getMedicamentosByIds
-  };
+  // Función para calcular el consumo de medicamentos
+const calcularConsumo = useCallback((medicamento: Medicamento): number => {
+  return (medicamento.stockInicial || 0) - (medicamento.stock || 0);
+}, []);
+
+// Función para obtener medicamentos con bajo stock
+const obtenerMedicamentosBajoStock = useCallback((umbral: number = 0.2): Medicamento[] => {
+  return medicamentos.filter(med => {
+    const consumo = calcularConsumo(med);
+    const porcentajeConsumido = consumo / (med.stockInicial || 1);
+    return porcentajeConsumido > umbral;
+  });
+}, [medicamentos, calcularConsumo]);
+
+// Retornar las nuevas funciones en el hook
+return {
+  medicamentos,
+  caducados,
+  loading,
+  error,
+  cargarMedicamentos,
+  buscarMedicamentos,
+  agregarMedicamento,
+  editarMedicamento,
+  getMedicamentoById,
+  getMedicamentosByIds,
+  calcularConsumo, // Nueva función exportada
+  obtenerMedicamentosBajoStock // Nueva función exportada
+};
 };

@@ -12,22 +12,49 @@ import {
 } from 'firebase/firestore';
 import { Medicamento } from '../types/medicamento';
 
-export const crearMedicamento = async (medicamento: Omit<Medicamento, 'id'>): Promise<Medicamento> => {
+export const crearMedicamento = async (medicamento: Omit<Medicamento, 'id' | 'fechaRegistro' | 'estado'>): Promise<Medicamento> => {
   try {
     // Validar campos requeridos
     if (!medicamento.nombre || !medicamento.presentacion || !medicamento.precioVenta) {
       throw new Error('Nombre, presentación y precio de venta son campos requeridos');
     }
 
-    const docRef = await addDoc(collection(db, "medicamentos"), {
+    // Establecer stockInicial igual al stock al crear el medicamento
+    const medicamentoConStockInicial = {
       ...medicamento,
+      stockInicial: medicamento.stock, // Inicializamos stockInicial
       fechaRegistro: new Date().toISOString(),
-      estado: 'activo' // Estado por defecto
-    });
+      estado: 'activo'
+    };
+
+    const docRef = await addDoc(collection(db, "medicamentos"), medicamentoConStockInicial);
     
-    return { id: docRef.id, ...medicamento };
+    return { id: docRef.id, ...medicamentoConStockInicial };
   } catch (error) {
     console.error("Error al crear medicamento:", error);
+    throw error;
+  }
+};
+
+export const actualizarMedicamento = async (
+  id: string, 
+  datosActualizados: Partial<Medicamento>
+): Promise<void> => {
+  try {
+    // Validar que el medicamento exista
+    const medicamento = await obtenerMedicamentoPorId(id);
+    if (!medicamento) {
+      throw new Error('Medicamento no encontrado');
+    }
+
+    // No permitir modificar el stockInicial directamente
+    if ('stockInicial' in datosActualizados) {
+      delete datosActualizados.stockInicial;
+    }
+
+    await updateDoc(doc(db, "medicamentos", id), datosActualizados);
+  } catch (error) {
+    console.error("Error al actualizar medicamento:", error);
     throw error;
   }
 };

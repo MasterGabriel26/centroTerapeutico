@@ -1,20 +1,21 @@
 export interface Medicamento {
-  id?: string; // ID autogenerado por Firebase
+  id?: string;
   nombre: string;
   nombreGenerico?: string;
   descripcion: string;
   categoria: 'analgesico' | 'antibiotico' | 'antiinflamatorio' | 'antidepresivo' | 'otros';
-  presentacion: string; // Tabletas, jarabe, inyección, etc.
-  concentracion: string; // Ej: "500mg", "10mg/ml"
+  presentacion: string;
+  concentracion: string;
   laboratorio: string;
   lote: string;
-  fechaCaducidad: string; // ISO string o Date
+  fechaCaducidad: string;
   stock: number;
+  stockInicial: number; // Nuevo campo: stock inicial
   precioCompra: number;
   precioVenta: number;
-  ubicacion: string; // Estante, armario, etc.
+  ubicacion: string;
   proveedor: string;
-  fechaRegistro: string; // ISO string o Date
+  fechaRegistro: string;
   requiereReceta: boolean;
   estado: 'activo' | 'inactivo' | 'caducado';
   notas?: string;

@@ -82,6 +82,12 @@ const MedicamentoDetail: React.FC<MedicamentoDetailProps> = ({ medicamento }) =>
               {medicamento.stock}
             </p>
           </div>
+            <div>
+            <p className="text-gray-500">Stock Inicial</p>
+            <p className={medicamento.stockInicial <= 10 ? 'text-yellow-600' : 'text-green-600'}>
+              {medicamento.stock}
+            </p>
+          </div>
           <div>
             <p className="text-gray-500">Precio</p>
             <p>${medicamento.precioVenta?.toFixed(2) || '0.00'}</p>

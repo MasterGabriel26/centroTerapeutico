@@ -104,29 +104,31 @@ useEffect(() => {
 
 
   // Filtrar recetas según término de búsqueda y estado
-  const filteredRecetas = useMemo(() => {
-    return recetas.filter(receta => {
-      if (statusFilter === "active" && !receta.isActive) return false;
-      if (statusFilter === "inactive" && receta.isActive) return false;
+const filteredRecetas = useMemo(() => {
+  return recetas.filter(receta => {
+    if (statusFilter === "active" && !receta.isActive) return false;
+    if (statusFilter === "inactive" && receta.isActive) return false;
+    
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
       
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        const matchesMotivo = receta.motivo.toLowerCase().includes(term);
-        const matchesDoctor = (doctoresInfo[receta.idDoctor] || "").toLowerCase().includes(term);
-        const matchesMedicamento = receta.medicamentos.some(m => {
-          return (
-            m.nombre.toLowerCase().includes(term) || 
-            m.posologia.toLowerCase().includes(term)
-          );
-        });
-        
-        return matchesMotivo || matchesDoctor || matchesMedicamento;
-      }
+      // Búsqueda en múltiples campos incluyendo el folio
+      const matchesMotivo = receta.motivo.toLowerCase().includes(term);
+      const matchesDoctor = (doctoresInfo[receta.idDoctor] || "").toLowerCase().includes(term);
+      const matchesFolio = receta.folio?.toLowerCase().includes(term); // Nueva línea para búsqueda por folio
+      const matchesMedicamento = receta.medicamentos.some(m => {
+        return (
+          m.nombre.toLowerCase().includes(term) || 
+          m.posologia.toLowerCase().includes(term)
+        );
+      });
       
-      return true;
-    });
-  }, [recetas, searchTerm, statusFilter, doctoresInfo]);
-
+      return matchesMotivo || matchesDoctor || matchesMedicamento || matchesFolio; // Agregar matchesFolio
+    }
+    
+    return true;
+  });
+}, [recetas, searchTerm, statusFilter, doctoresInfo]);
   const resetForm = useCallback(() => {
     setMotivo("");
     setMedicamentosReceta([]);
@@ -184,89 +186,97 @@ const handleRemoveMedicamento = useCallback((index: number) => {
     setMedicamentosReceta(prev => prev.filter((_, i) => i !== index));
   }, []);
 
-  const handleSubmit = useCallback(async () => {
-    if (!doctor?.id) {
-      setFormError("No se pudo identificar al médico");
-      return;
-    }
-    
-    if (!motivo.trim()) {
-      setFormError("El motivo es obligatorio");
-      return;
-    }
-    
-    if (medicamentosReceta.length === 0) {
-      setFormError("Debe agregar al menos un medicamento");
-      return;
-    }
-    
-    setIsSubmitting(true);
-    setFormError(null);
-    
-    try {
-      // Calcular el total
-      const total = medicamentosReceta.reduce((sum, med) => sum + (med.subtotal || 0), 0);
+const handleSubmit = useCallback(async () => {
+  if (!doctor?.id) {
+    setFormError("No se pudo identificar al médico");
+    return;
+  }
+  
+  if (!motivo.trim()) {
+    setFormError("El motivo es obligatorio");
+    return;
+  }
+  
+  if (medicamentosReceta.length === 0) {
+    setFormError("Debe agregar al menos un medicamento");
+    return;
+  }
+  
+  setIsSubmitting(true);
+  setFormError(null);
+  
+  try {
+    // Calcular el total
+    const total = medicamentosReceta.reduce((sum, med) => sum + (med.subtotal || 0), 0);
 
-      // Usar transacción para asegurar la integridad de los datos
-      await runTransaction(db, async (transaction) => {
-        // 1. Verificar stock y preparar actualizaciones
-        const updates = [];
-        for (const med of medicamentosReceta) {
-          const medRef = doc(db, "medicamentos", med.medicamentoId);
-          const medDoc = await transaction.get(medRef);
-          
-          if (!medDoc.exists()) {
-            throw new Error(`Medicamento ${med.medicamentoId} no encontrado`);
-          }
-          
-          const currentStock = medDoc.data().stock;
-          if (currentStock < med.cantidad) {
-            throw new Error(`No hay suficiente stock de ${med.nombre}. Stock disponible: ${currentStock}`);
-          }
-          
-          // Preparar actualización de stock
-          updates.push({
-            ref: medRef,
-            newStock: currentStock - med.cantidad
-          });
+    // Generar folio único
+    const timestamp = new Date().getTime().toString();
+    const randomPart = Math.floor(Math.random() * 900) + 100; // 100-999
+    const folio = `REC-${timestamp.slice(-6)}-${randomPart}`;
+
+    // Usar transacción para asegurar la integridad de los datos
+    await runTransaction(db, async (transaction) => {
+      // 1. Verificar stock y preparar actualizaciones
+      const updates = [];
+      for (const med of medicamentosReceta) {
+        const medRef = doc(db, "medicamentos", med.medicamentoId);
+        const medDoc = await transaction.get(medRef);
+        
+        if (!medDoc.exists()) {
+          throw new Error(`Medicamento ${med.medicamentoId} no encontrado`);
         }
-
-        // 2. Aplicar todas las actualizaciones de stock
-        for (const update of updates) {
-          transaction.update(update.ref, { stock: update.newStock });
+        
+        const currentStock = medDoc.data().stock;
+        if (currentStock < med.cantidad) {
+          throw new Error(`No hay suficiente stock de ${med.nombre}. Stock disponible: ${currentStock}`);
         }
-
-        // 3. Crear la receta
-        const recetaRef = doc(collection(db, `pacientes/${pacienteId}/recetas`));
-        transaction.set(recetaRef, {
-          idDoctor: doctor.id,
-          motivo,
-          medicamentos: medicamentosReceta.map(med => ({
-            medicamentoId: med.medicamentoId,
-            nombre: med.nombre,
-            posologia: med.posologia,
-            tiempoUso: med.tiempoUso,
-            cantidad: med.cantidad,
-            precioUnitario: med.precioUnitario,
-            subtotal: med.subtotal,
-            notasAdicionales: med.notasAdicionales
-          })),
-          total,
-          isActive: true,
-          fecha: new Date()
+        
+        // Preparar actualización de stock
+        updates.push({
+          ref: medRef,
+          newStock: currentStock - med.cantidad
         });
+      }
+
+      // 2. Aplicar todas las actualizaciones de stock
+      for (const update of updates) {
+        transaction.update(update.ref, { stock: update.newStock });
+      }
+
+      // 3. Crear la receta CON EL FOLIO INCLUIDO
+      const recetaRef = doc(collection(db, `pacientes/${pacienteId}/recetas`));
+      transaction.set(recetaRef, {
+        idDoctor: doctor.id,
+        motivo,
+        medicamentos: medicamentosReceta.map(med => ({
+          medicamentoId: med.medicamentoId,
+          nombre: med.nombre,
+          posologia: med.posologia,
+          tiempoUso: med.tiempoUso,
+          cantidad: med.cantidad,
+          precioUnitario: med.precioUnitario,
+          subtotal: med.subtotal,
+          notasAdicionales: med.notasAdicionales
+        })),
+        total,
+        isActive: true,
+        fecha: new Date(),
+        folio // AÑADE ESTA LÍNEA PARA INCLUIR EL FOLIO
       });
 
-      setOpenModal(false);
-      resetForm();
-      await cargarRecetas();
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Error al crear la receta");
-      console.error(err);
-    } finally {
-      setIsSubmitting(false);
-    }
-  }, [doctor, motivo, medicamentosReceta, pacienteId, cargarRecetas, resetForm]);
+      console.log('Receta creada con folio:', folio); // Para depuración
+    });
+
+    setOpenModal(false);
+    resetForm();
+    await cargarRecetas();
+  } catch (err) {
+    setFormError(err instanceof Error ? err.message : "Error al crear la receta");
+    console.error(err);
+  } finally {
+    setIsSubmitting(false);
+  }
+}, [doctor, motivo, medicamentosReceta, pacienteId, cargarRecetas, resetForm]);
 
   const formatDate = useCallback((date?: Date) => {
     if (!date) return 'Fecha no disponible';
@@ -335,13 +345,13 @@ const handleRemoveMedicamento = useCallback((index: number) => {
       {/* Barra de búsqueda y filtros */}
       <div className="mb-6 flex flex-col sm:flex-row gap-4">
         <div className="relative flex-1">
-          <input
-            type="text"
-            placeholder="Buscar recetas..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-          />
+         <input
+  type="text"
+  placeholder="Buscar recetas (folio, médico, motivo, medicamento...)"
+  value={searchTerm}
+  onChange={(e) => setSearchTerm(e.target.value)}
+  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
+/>
           <Search className="absolute left-3 top-2.5 text-gray-400" size={18} />
         </div>
         
@@ -651,6 +661,7 @@ const handleRemoveMedicamento = useCallback((index: number) => {
                   <div key={receta.id} className="border rounded-lg p-4 bg-white">
                     <div className="flex justify-between items-start">
                       <div>
+                        <p className="font-medium">{receta.folio}</p>
                         <p className="font-medium">{formatDate(receta.fecha)}</p>
                         <p className="text-sm text-gray-600">
                           {doctoresInfo[receta.idDoctor] || "Cargando..."}
@@ -711,6 +722,9 @@ const handleRemoveMedicamento = useCallback((index: number) => {
                 <table className="min-w-full divide-y divide-gray-200">
                   <thead className="bg-gray-50">
                     <tr>
+                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+        Folio
+      </th>
                       <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                         Fecha
                       </th>
@@ -737,6 +751,9 @@ const handleRemoveMedicamento = useCallback((index: number) => {
                         key={receta.id} 
                         className={`hover:bg-gray-50 ${!receta.isActive ? 'bg-gray-100 text-gray-500' : ''}`}
                       >
+                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+          {receta.folio}
+        </td>
                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                           {formatDate(receta.fecha)}
                         </td>
@@ -812,6 +829,11 @@ const handleRemoveMedicamento = useCallback((index: number) => {
         {detalleReceta && (
           <div className="p-4 space-y-6 max-h-[70vh] overflow-y-auto">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              
+                <div>
+          <p className="text-sm text-gray-500 mb-1">Folio</p>
+          <p className="font-medium">{detalleReceta.folio}</p>
+        </div>
               <div>
                 <p className="text-sm text-gray-500 mb-1">Fecha</p>
                 <p className="font-medium">{formatDate(detalleReceta.fecha)}</p>

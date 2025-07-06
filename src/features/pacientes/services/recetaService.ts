@@ -15,35 +15,71 @@ async function getMedicamentoInfo(medicamentoId: string): Promise<Medicamento> {
     ...medicamentoDoc.data()
   } as Medicamento;
 }
-export const addReceta = async (pacienteId: string, data: Receta) => {
-    const recetasRef = collection(db, `pacientes/${pacienteId}/recetas`);
-    
-    // Calcular el total sumando los precios de los medicamentos
-    let total = 0;
-    const medicamentosConInfo = await Promise.all(
-        data.medicamentos.map(async (med) => {
-            const medicamentoInfo = await getMedicamentoInfo(med.medicamentoId);
-            const subtotal = medicamentoInfo.precioVenta * med.cantidad;
-            total += subtotal;
-            
-            return {
-                ...med,
-                nombre: medicamentoInfo.nombre, // Guardamos el nombre para fácil referencia
-                precioUnitario: medicamentoInfo.precioVenta,
-                subtotal
-            };
-        })
-    );
-    
-    const docRef = await addDoc(recetasRef, {
-        ...data,
-        medicamentos: medicamentosConInfo,
-        total,
-        fecha: new Date(), // Fecha de creación automática
-        isActive: true // Por defecto activa
-    });
-    
-    return docRef.id;
+
+
+
+// services/recetas.ts
+function generarFolioSimple(): string {
+  const now = new Date();
+  const year = now.getFullYear().toString().slice(-2); // Últimos 2 dígitos del año
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  const randomChars = Math.random().toString(36).substring(2, 5).toUpperCase(); // 3 caracteres aleatorios
+  
+  return `R${year}${month}${day}-${randomChars}`;
+}
+
+// services/recetaService.ts
+export const addReceta = async (pacienteId: string, data: Omit<Receta, 'id' | 'fecha' | 'folio'>) => {
+    try {
+        const recetasRef = collection(db, `pacientes/${pacienteId}/recetas`);
+        
+        // 1. Generar folio
+        const timestamp = new Date().getTime().toString();
+        const randomPart = Math.floor(Math.random() * 900) + 100; // 100-999
+        const folio = `REC-${timestamp.slice(-6)}-${randomPart}`;
+        
+        console.log('Generando folio:', folio); // Debug
+        
+        // 2. Calcular total y procesar medicamentos
+        let total = 0;
+        const medicamentosConInfo = await Promise.all(
+            data.medicamentos.map(async (med) => {
+                const medicamentoInfo = await getMedicamentoInfo(med.medicamentoId);
+                const subtotal = medicamentoInfo.precioVenta * med.cantidad;
+                total += subtotal;
+                
+                return {
+                    ...med,
+                    nombre: medicamentoInfo.nombre,
+                    precioUnitario: medicamentoInfo.precioVenta,
+                    subtotal
+                };
+            })
+        );
+        
+        // 3. Preparar datos completos
+        const recetaCompleta = {
+            ...data,
+            medicamentos: medicamentosConInfo,
+            total,
+            fecha: new Date(),
+            isActive: true,
+            folio
+        };
+        
+        console.log('Datos completos de receta:', recetaCompleta); // Debug
+        
+        // 4. Crear documento
+        const docRef = await addDoc(recetasRef, recetaCompleta);
+        
+        console.log('Receta creada con ID:', docRef.id); // Debug
+        
+        return docRef.id;
+    } catch (error) {
+        console.error('Error en addReceta:', error);
+        throw error;
+    }
 };
 
 export const getRecetas = async (pacienteId: string, options?: {

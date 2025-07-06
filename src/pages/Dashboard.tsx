@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react"
 import { Card } from "../components/ui/Card"
-import { Users, CreditCard, Activity, TrendingUp, TrendingDown, Calendar } from "lucide-react"
+import { Users, CreditCard, Activity, TrendingUp, TrendingDown, Calendar,Pill } from "lucide-react"
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -97,6 +97,10 @@ const Dashboard = () => {
   const [expensesData, setExpensesData] = useState<{ labels: string[]; values: number[] }>({ labels: [], values: [] })
   const [recentActivity, setRecentActivity] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState<boolean>(true)
+  const [gastoMedicamentos, setGastoMedicamentos] = useState<number>(0)
+  const [valorInventario, setValorInventario] = useState<number>(0)
+const [gastoMedicamentosData, setGastoMedicamentosData] = useState<number[]>([]);
+
 
   useEffect(() => {
     const fetchData = async () => {
@@ -151,6 +155,8 @@ const Dashboard = () => {
 
         setIngresosTotales(totalIngresos)
         setPagosPendientes(totalPendientes)
+
+
 
         // 3. Procesar gastos para el rango completo
         const gastosSnap = await getDocs(
@@ -248,6 +254,55 @@ const Dashboard = () => {
 
         setRecentActivity(actividad.slice(0, 4))
 
+
+      // 7. Calcular inversión en medicamentos (usando fechaRegistro)
+      const medicamentosSnap = await getDocs(
+        query(
+          collection(db, "medicamentos"),
+          where("fechaRegistro", ">=", startDateISO),
+          where("fechaRegistro", "<=", endDateISO)
+        )
+      );
+
+      let totalGastoMedicamentos = 0;
+      const gastoMedicamentosPorMes = new Array(monthCount).fill(0);
+
+      medicamentosSnap.docs.forEach((doc) => {
+        const med = doc.data();
+        const stockInicial = med.stockInicial || 0;
+        const precioCompra = med.precioCompra || 0;
+        const gasto = stockInicial * precioCompra;
+     
+        totalGastoMedicamentos += gasto;
+        console.log(totalGastoMedicamentos)
+        // Distribuir por mes
+        const monthIndex = getMonthIndex(med.fechaRegistro, monthsRange);
+        if (monthIndex !== -1) {
+          gastoMedicamentosPorMes[monthIndex] += gasto;
+        }
+      });
+
+      // Calcular valor actual del inventario (todos los medicamentos)
+      const inventarioSnap = await getDocs(collection(db, "medicamentos"));
+      let totalValorInventario = 0;
+      
+      inventarioSnap.docs.forEach((doc) => {
+        const med = doc.data();
+        totalValorInventario += (med.stock || 0) * (med.precioCompra || 0);
+      });
+
+      setGastoMedicamentos(totalGastoMedicamentos);
+      setValorInventario(totalValorInventario);
+      setGastoMedicamentosData(gastoMedicamentosPorMes);
+
+
+      // Actualizar datos financieros para incluir medicamentos
+      setFinancialData(prev => ({
+        ingresos: prev.ingresos,
+        gastos: prev.gastos.map((gasto, index) => gasto + gastoMedicamentosPorMes[index]),
+        gastosMedicamentos: gastoMedicamentosPorMes
+      }));
+
         console.log("Data fetched successfully:", {
           totalIngresos,
           totalGastos,
@@ -326,6 +381,24 @@ const Dashboard = () => {
       ],
     }
   }, [expensesData])
+
+
+  const medicamentosChartData = useMemo(
+  () => ({
+    labels: getMonthsRange(dateRange).map((m) => m.label),
+    datasets: [
+      {
+        label: "Gastos en Medicamentos",
+        data: gastoMedicamentosData,
+        backgroundColor: "rgba(59, 130, 246, 0.6)",
+        borderColor: "rgba(59, 130, 246, 1)",
+        borderWidth: 1,
+      },
+    ],
+  }),
+  [gastoMedicamentosData, dateRange],
+);
+
 
   // Formateador de fecha relativa
   const formatRelativeTime = (dateString: string) => {
@@ -457,68 +530,100 @@ const Dashboard = () => {
             </div>
           </div>
         </Card>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
-        <Card className="p-0">
-          <h3 className="text-lg font-semibold mb-4">Resumen Financiero</h3>
-          <div className="h-64">
-            <Line data={lineChartData} />
-          </div>
-        </Card>
-
-        <Card className="p-0">
-          <h3 className="text-lg font-semibold mb-4">Nuevos Pacientes</h3>
-          <div className="h-64">
-            <Bar data={barChartData} />
-          </div>
-        </Card>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
-        <Card className="p-2">
-          <h3 className="text-lg font-semibold mb-4">Distribución de Gastos</h3>
-          <div className="h-64">
-            {expensesData.labels.length > 0 && expensesData.labels[0] !== "Sin datos" ? (
-              <Doughnut data={doughnutChartData} />
-            ) : (
-              <div className="flex items-center justify-center h-full text-gray-500">
-                No hay datos de gastos para este periodo
-              </div>
-            )}
-          </div>
-        </Card>
-
-        <div className="lg:col-span-2">
-          <Card className="p-2">
-            <h3 className="text-lg font-semibold mb-4">Actividad Reciente</h3>
-            <div className="space-y-4">
-              {recentActivity.map((item, i) => (
-                <div key={i} className="flex items-start space-x-3 pb-4 border-b border-gray-100 last:border-0">
-                  <div
-                    className={`p-2 rounded-full ${
-                      item.type === "paciente" ? "bg-primary-50 text-primary-600" : "bg-success-50 text-success-600"
-                    }`}
-                  >
-                    {item.type === "paciente" ? <Users size={18} /> : <CreditCard size={18} />}
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium">
-                      {item.type === "paciente" ? "Nuevo paciente registrado" : "Pago recibido"}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      {item.type === "paciente"
-                        ? `${item.nombre} - ${item.extra}`
-                        : `$${item.monto?.toLocaleString() || "0"} - Paciente ID: ${item.pacienteId?.slice(0, 8)}`}
-                    </p>
-                    <p className="text-xs text-gray-400 mt-1">{formatRelativeTime(item.fecha)}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </Card>
+      <Card className="p-0 border border-gray-100 hover:border-primary-100 transition-all">
+  <div className="flex items-start justify-between p-4">
+    <div>
+      <p className="text-sm font-medium text-gray-500">Inversión en Medicamentos</p>
+      <h3 className="text-2xl font-bold mt-1">
+        ${gastoMedicamentos.toLocaleString('es-MX', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        })}
+      </h3>
+      <div className="mt-2 space-y-1 text-sm">
+       
+        <div className="flex items-center text-blue-600">
+          <Pill size={16} className="mr-1" />
+          <span>En el periodo</span>
         </div>
       </div>
+    </div>
+    <div className="p-3 rounded-lg bg-blue-50 text-blue-600">
+      <Pill size={24} />
+    </div>
+  </div>
+</Card>
+      </div>
+
+   <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+      <Card className="p-0">
+        <h3 className="text-lg font-semibold mb-4">Resumen Financiero</h3>
+        <div className="h-64">
+          <Line data={lineChartData} />
+        </div>
+      </Card>
+
+      <Card className="p-0">
+        <h3 className="text-lg font-semibold mb-4">Gastos en Medicamentos</h3>
+        <div className="h-64">
+          <Bar 
+            data={medicamentosChartData}
+            options={{
+              responsive: true,
+              plugins: {
+                legend: {
+                  position: 'top',
+                },
+                tooltip: {
+                  callbacks: {
+                    label: function(context) {
+                      return `$${context.raw.toLocaleString('es-MX', { 
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2 
+                      })}`;
+                    }
+                  }
+                }
+              },
+              scales: {
+                y: {
+                  beginAtZero: true,
+                  ticks: {
+                    callback: function(value) {
+                      return `$${value.toLocaleString()}`;
+                    }
+                  }
+                }
+              }
+            }}
+          />
+        </div>
+      </Card>
+    </div>
+
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 mb-2">
+      <Card className="p-0">
+        <h3 className="text-lg font-semibold mb-4">Nuevos Pacientes</h3>
+        <div className="h-64">
+          <Bar data={barChartData} />
+        </div>
+      </Card>
+
+      <Card className="p-2">
+        <h3 className="text-lg font-semibold mb-4">Distribución de Gastos</h3>
+        <div className="h-64">
+          {expensesData.labels.length > 0 && expensesData.labels[0] !== "Sin datos" ? (
+            <Doughnut data={doughnutChartData} />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              No hay datos de gastos para este periodo
+            </div>
+          )}
+        </div>
+      </Card>
+    </div>
+
     </div>
   )
 }

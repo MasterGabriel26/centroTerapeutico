@@ -115,23 +115,7 @@ export const obtenerMedicamentoPorId = async (id: string): Promise<Medicamento |
   }
 };
 
-export const actualizarMedicamento = async (
-  id: string, 
-  datosActualizados: Partial<Medicamento>
-): Promise<void> => {
-  try {
-    // Validar que el medicamento exista
-    const medicamento = await obtenerMedicamentoPorId(id);
-    if (!medicamento) {
-      throw new Error('Medicamento no encontrado');
-    }
 
-    await updateDoc(doc(db, "medicamentos", id), datosActualizados);
-  } catch (error) {
-    console.error("Error al actualizar medicamento:", error);
-    throw error;
-  }
-};
 
 export const obtenerMedicamentosPorIds = async (ids: string[]): Promise<Medicamento[]> => {
   try {

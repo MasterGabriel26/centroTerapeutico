@@ -85,7 +85,7 @@ const MedicamentoDetail: React.FC<MedicamentoDetailProps> = ({ medicamento }) =>
             <div>
             <p className="text-gray-500">Stock Inicial</p>
             <p className={medicamento.stockInicial <= 10 ? 'text-yellow-600' : 'text-green-600'}>
-              {medicamento.stock}
+              {medicamento.stockInicial}
             </p>
           </div>
           <div>

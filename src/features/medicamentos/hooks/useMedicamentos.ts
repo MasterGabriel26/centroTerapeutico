@@ -143,6 +143,19 @@ const obtenerMedicamentosBajoStock = useCallback((umbral: number = 0.2): Medicam
   });
 }, [medicamentos, calcularConsumo]);
 
+
+const calcularInversionMedicamentos = useCallback(() => {
+  return medicamentos.reduce((total, med) => {
+    return total + ((med.stockInicial || 0) * (med.precioCompra || 0));
+  }, 0);
+}, [medicamentos]);
+
+const calcularValorInventario = useCallback(() => {
+  return medicamentos.reduce((total, med) => {
+    return total + ((med.stock || 0) * (med.precioCompra || 0));
+  }, 0);
+}, [medicamentos]);
+
 // Retornar las nuevas funciones en el hook
 return {
   medicamentos,
@@ -156,6 +169,7 @@ return {
   getMedicamentoById,
   getMedicamentosByIds,
   calcularConsumo, // Nueva función exportada
-  obtenerMedicamentosBajoStock // Nueva función exportada
+  obtenerMedicamentosBajoStock,
+  
 };
 };

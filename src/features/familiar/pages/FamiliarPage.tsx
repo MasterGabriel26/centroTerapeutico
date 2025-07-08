@@ -1,33 +1,19 @@
+// pages/FamiliarPage.tsx
 "use client"
 
-import type React from "react"
-import { useEffect, useState } from "react"
+import React, { useState, useEffect } from "react"
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
-import { db } from "../utils/firebase"
-import {
-  Calendar,
-  Clock,
-  FileText,
-  User,
-  CreditCard,
-  AlertCircle,
-  Loader2,
-  Activity,
-  Phone,
-  Mail,
-  ImageIcon,
-  X,
-  ZoomIn,
-  Download,
-  MoreHorizontal,
-} from "lucide-react"
-import { Button } from "../components/ui/Button"
-import { Card } from "../components/ui/Card"
+import { db } from "../../../utils/firebase"
+import { Calendar, Clock, FileText, User, CreditCard, AlertCircle, Loader2, Activity, Phone, Mail } from "lucide-react"
+import { Button } from "../../../components/ui/Button"
+import { Card } from "../../../components/ui/Card"
 import { format, parseISO, differenceInDays } from "date-fns"
 import { es } from "date-fns/locale"
-import { useAuthStore } from "../store/authStore"
-import { useSeguimientos } from "../features/pacientes/hooks/useSeguimiento"
-import { useCuentaDeCobro } from "../features/pagos/hooks/useCuentaDeCobro"
+import { useAuthStore } from "../../../store/authStore"
+import { useSeguimientos } from "../../pacientes/hooks/useSeguimiento"
+import { useCuentaDeCobro } from "../../pagos/hooks/useCuentaDeCobro"
+import SeguimientoCard from "../components/SeguimientoCard"
+import MediaModal from "../components/MediaModal"
 
 type Paciente = {
   id: string
@@ -42,162 +28,15 @@ type Paciente = {
   voluntario: boolean
 }
 
-type ImageModalProps = {
-  imageUrl: string
-  onClose: () => void
-  isOpen: boolean
-}
-
-const ImageModal: React.FC<ImageModalProps> = ({ imageUrl, onClose, isOpen }) => {
-  const [isZoomed, setIsZoomed] = useState(false)
-  const [imagePosition, setImagePosition] = useState({ x: 0, y: 0 })
-  const [isDragging, setIsDragging] = useState(false)
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
-
-  useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === "Escape") {
-        onClose()
-      }
-    }
-
-    if (isOpen) {
-      document.addEventListener("keydown", handleEscape)
-      document.body.style.overflow = "hidden"
-    }
-
-    return () => {
-      document.removeEventListener("keydown", handleEscape)
-      document.body.style.overflow = "unset"
-    }
-  }, [isOpen, onClose])
-
-  const handleMouseDown = (e: React.MouseEvent) => {
-    if (isZoomed) {
-      setIsDragging(true)
-      setDragStart({ x: e.clientX - imagePosition.x, y: e.clientY - imagePosition.y })
-    }
-  }
-
-  const handleMouseMove = (e: React.MouseEvent) => {
-    if (isDragging && isZoomed) {
-      setImagePosition({
-        x: e.clientX - dragStart.x,
-        y: e.clientY - dragStart.y,
-      })
-    }
-  }
-
-  const handleMouseUp = () => {
-    setIsDragging(false)
-  }
-
-  const toggleZoom = () => {
-    if (isZoomed) {
-      setIsZoomed(false)
-      setImagePosition({ x: 0, y: 0 })
-    } else {
-      setIsZoomed(true)
-    }
-  }
-
-  const handleDownload = () => {
-    const link = document.createElement("a")
-    link.href = imageUrl
-    link.download = `seguimiento-${Date.now()}.jpg`
-    document.body.appendChild(link)
-    link.click()
-    document.body.removeChild(link)
-  }
-
-  if (!isOpen) return null
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm" onClick={onClose}>
-      <div className="relative w-full h-full flex items-center justify-center p-4">
-        {/* Header del modal */}
-        <div className="absolute top-0 left-0 right-0 z-20 bg-gradient-to-b from-black/80 to-transparent p-6">
-          <div className="flex justify-between items-center max-w-4xl mx-auto">
-            <div>
-              <h3 className="text-white font-semibold text-xl">Imagen de Seguimiento</h3>
-              <p className="text-white/70 text-sm mt-1">
-                {isZoomed ? "Arrastra para mover • Clic para alejar" : "Clic para acercar"}
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button
-                onClick={toggleZoom}
-                className="p-3 bg-white/20 hover:bg-white/30 rounded-xl text-white transition-all backdrop-blur-sm"
-                aria-label={isZoomed ? "Alejar" : "Acercar"}
-              >
-                <ZoomIn className="h-5 w-5" />
-              </button>
-              <button
-                onClick={handleDownload}
-                className="p-3 bg-white/20 hover:bg-white/30 rounded-xl text-white transition-all backdrop-blur-sm"
-                aria-label="Descargar imagen"
-              >
-                <Download className="h-5 w-5" />
-              </button>
-              <button
-                onClick={onClose}
-                className="p-3 bg-white/20 hover:bg-white/30 rounded-xl text-white transition-all backdrop-blur-sm"
-                aria-label="Cerrar modal"
-              >
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Contenedor de la imagen */}
-        <div
-          className="relative max-w-6xl max-h-[90vh] w-full overflow-hidden rounded-2xl bg-white shadow-2xl"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div
-            className={`relative w-full h-full ${isZoomed ? "cursor-move" : "cursor-zoom-in"}`}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onMouseLeave={handleMouseUp}
-            onClick={toggleZoom}
-          >
-            <img
-              src={imageUrl || "/placeholder.svg"}
-              alt="Imagen de seguimiento ampliada"
-              className={`w-full h-auto max-h-[90vh] object-contain bg-gray-50 transition-transform duration-300 ${
-                isZoomed ? "scale-150" : "scale-100"
-              }`}
-              style={{
-                transform: isZoomed
-                  ? `scale(1.5) translate(${imagePosition.x / 1.5}px, ${imagePosition.y / 1.5}px)`
-                  : "scale(1)",
-                minHeight: "400px",
-              }}
-              draggable={false}
-            />
-          </div>
-        </div>
-
-        {/* Indicadores en la parte inferior */}
-        <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 bg-black/60 text-white px-4 py-2 rounded-full text-sm backdrop-blur-sm">
-          {isZoomed ? "Arrastra para mover • Clic para alejar" : "Clic para acercar"}
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const PacientePage = () => {
+const FamiliarPage = () => {
   const { usuario } = useAuthStore()
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [paciente, setPaciente] = useState<Paciente | null>(null)
   const [activeTab, setActiveTab] = useState("seguimiento")
-  const [selectedImage, setSelectedImage] = useState<string | null>(null)
+  const [selectedMedia, setSelectedMedia] = useState<{ urls: string[]; index: number; types: string[] } | null>(null)
   const [retryCount, setRetryCount] = useState(0)
-  const [imageLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set())
+  const [mediaLoadErrors, setImageLoadErrors] = useState<Set<string>>(new Set())
 
   const {
     seguimientos,
@@ -211,6 +50,18 @@ const PacientePage = () => {
   const handleImageError = (imageUrl: string) => {
     setImageLoadErrors((prev) => new Set([...prev, imageUrl]))
   }
+
+  const handleRetryMedia = (imageUrl: string) => {
+    setImageLoadErrors((prev) => {
+      const newSet = new Set(prev)
+      newSet.delete(imageUrl)
+      return newSet
+    })
+  }
+
+const handleMediaClick = (urls: string[], index: number, types: string[]) => {
+  setSelectedMedia({ urls, index, types })
+}
 
   const handleRetryFetchSeguimientos = async () => {
     try {
@@ -349,15 +200,6 @@ const PacientePage = () => {
   const formatFecha = (fecha: string) => {
     try {
       return format(parseISO(fecha), "PPP", { locale: es })
-    } catch (err) {
-      console.warn("Error al formatear fecha:", fecha, err)
-      return fecha
-    }
-  }
-
-  const formatFechaCorta = (fecha: string) => {
-    try {
-      return format(parseISO(fecha), "dd MMM yyyy", { locale: es })
     } catch (err) {
       console.warn("Error al formatear fecha:", fecha, err)
       return fecha
@@ -627,78 +469,13 @@ const PacientePage = () => {
                     ) : seguimientosActivos.length > 0 ? (
                       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {seguimientosActivos.map((seguimiento) => (
-                          <div
-                            key={seguimiento.id}
-                            className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all hover:shadow-md max-w-sm"
-                          >
-                            {/* Header del post compacto */}
-                            <div className="flex items-center justify-between p-3 border-b border-gray-100">
-                              <div className="flex items-center gap-2">
-                                <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center">
-                                  <Activity className="h-4 w-4 text-white" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 text-sm">Seguimiento</p>
-                                  <p className="text-xs text-gray-500">{formatFechaCorta(seguimiento.fecha)}</p>
-                                </div>
-                              </div>
-                              <button className="p-1 hover:bg-gray-100 rounded-full transition-colors">
-                                <MoreHorizontal className="h-4 w-4 text-gray-500" />
-                              </button>
-                            </div>
-
-                            {/* Imagen del post compacta */}
-                            {seguimiento.url && !imageLoadErrors.has(seguimiento.url) && (
-                              <div className="relative">
-                                <div
-                                  className="aspect-square w-full cursor-pointer overflow-hidden bg-gray-100"
-                                  onClick={() => setSelectedImage(seguimiento.url)}
-                                >
-                                  <img
-                                    src={seguimiento.url || "/placeholder.svg"}
-                                    alt="Imagen de seguimiento"
-                                    className="w-full h-full object-cover transition-transform duration-200 hover:scale-105"
-                                    onError={() => handleImageError(seguimiento.url)}
-                                  />
-                                </div>
-
-                                {/* Overlay sutil */}
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/20 via-transparent to-transparent opacity-0 hover:opacity-100 transition-opacity duration-200 flex items-end p-3">
-                                  <span className="text-white text-xs font-medium bg-black/40 px-2 py-1 rounded-full backdrop-blur-sm">
-                                    Toca para ampliar
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {/* Error de imagen compacto */}
-                            {seguimiento.url && imageLoadErrors.has(seguimiento.url) && (
-                              <div className="aspect-square w-full bg-gradient-to-br from-gray-100 to-gray-200 flex flex-col items-center justify-center">
-                                <ImageIcon className="h-8 w-8 text-gray-400 mb-2" />
-                                <p className="text-gray-500 text-xs font-medium mb-2">Error al cargar</p>
-                                <button
-                                  onClick={() => {
-                                    setImageLoadErrors((prev) => {
-                                      const newSet = new Set(prev)
-                                      newSet.delete(seguimiento.url)
-                                      return newSet
-                                    })
-                                  }}
-                                  className="text-blue-600 hover:text-blue-700 text-xs font-medium bg-white px-3 py-1 rounded-full shadow-sm"
-                                >
-                                  Reintentar
-                                </button>
-                              </div>
-                            )}
-
-                            {/* Contenido del post compacto */}
-                            <div className="p-3">
-                              <h4 className="font-semibold text-gray-900 text-sm mb-1">{seguimiento.comportamiento}</h4>
-                              <p className="text-gray-600 text-xs leading-relaxed line-clamp-3">
-                                {seguimiento.descripcion}
-                              </p>
-                            </div>
-                          </div>
+                          <SeguimientoCard
+  key={seguimiento.id}
+  seguimiento={seguimiento}
+  onMediaClick={handleMediaClick}
+  mediaLoadErrors={mediaLoadErrors}
+  onRetryMedia={handleRetryMedia}
+/>
                         ))}
                       </div>
                     ) : (
@@ -805,10 +582,18 @@ const PacientePage = () => {
         </div>
       </div>
 
-      {/* Modal de imagen mejorado */}
-      <ImageModal imageUrl={selectedImage || ""} onClose={() => setSelectedImage(null)} isOpen={!!selectedImage} />
+      {/* Modal de imágenes */}
+    {selectedMedia && (
+  <MediaModal
+    mediaUrls={selectedMedia.urls}
+    mediaTypes={selectedMedia.types}
+    initialIndex={selectedMedia.index}
+    onClose={() => setSelectedMedia(null)}
+    isOpen={!!selectedMedia}
+  />
+)}
     </>
   )
 }
 
-export default PacientePage
+export default FamiliarPage

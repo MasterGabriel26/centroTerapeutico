@@ -14,7 +14,8 @@ export const createSeguimiento = async (pacienteId: string, seguimiento: Omit<Se
   const seguimientosRef = collection(db, "pacientes", pacienteId, "seguimientos");
   const seguimientoDoc = await addDoc(seguimientosRef, {
     ...seguimiento,
-    isActive: true // Asegurar que siempre se cree como activo
+    urls: seguimiento.urls || [], // Asegurar que siempre haya un array
+    isActive: true
   });
   return seguimientoDoc.id;
 };
@@ -22,12 +23,21 @@ export const createSeguimiento = async (pacienteId: string, seguimiento: Omit<Se
 export const getSeguimientos = async (pacienteId: string): Promise<Seguimiento[]> => {
   const seguimientosRef = collection(db, "pacientes", pacienteId, "seguimientos");
   const snapshot = await getDocs(seguimientosRef);
-  return snapshot.docs.map(doc => ({ 
-    id: doc.id, 
-    ...doc.data() 
-  })) as Seguimiento[];
+  return snapshot.docs.map(doc => {
+    const data = doc.data();
+    return {
+      id: doc.id,
+      urls: data.urls || [], // Asegurar que siempre haya un array
+      idDoctor: data.idDoctor,
+      descripcion: data.descripcion,
+      fecha: data.fecha,
+      comportamiento: data.comportamiento,
+      isActive: data.isActive
+    } as Seguimiento;
+  });
 };
 
+// El resto del servicio permanece igual
 export const toggleSeguimientoStatus = async (pacienteId: string, seguimientoId: string) => {
   const seguimientoRef = doc(db, "pacientes", pacienteId, "seguimientos", seguimientoId);
   const seguimientoDoc = await getDoc(seguimientoRef);

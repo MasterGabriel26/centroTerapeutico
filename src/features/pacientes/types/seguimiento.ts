@@ -1,9 +1,9 @@
 export interface Seguimiento {
   id?: string;
-  url: string;
-  idDoctor:string;
+  urls: string[];  // Cambiamos de 'url' a 'urls' como array
+  idDoctor: string;
   descripcion: string;
   fecha: string;
   comportamiento: string;
-  isActive:boolean;
+  isActive: boolean;
 }

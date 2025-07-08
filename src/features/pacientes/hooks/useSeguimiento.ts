@@ -29,7 +29,12 @@ export const useSeguimientos = (pacienteId: string) => {
     setLoading(true);
     setError(null);
     try {
-      await createSeguimiento(pacienteId, seguimiento);
+      // Asegurar que urls es un array
+      const seguimientoConUrls = {
+        ...seguimiento,
+        urls: Array.isArray(seguimiento.urls) ? seguimiento.urls : [seguimiento.urls].filter(Boolean)
+      };
+      await createSeguimiento(pacienteId, seguimientoConUrls);
       await fetchSeguimientos();
     } catch (err) {
       setError("Error al agregar el seguimiento");
@@ -38,6 +43,7 @@ export const useSeguimientos = (pacienteId: string) => {
     }
   };
 
+  // El resto del hook permanece igual
   const toggleStatus = async (seguimientoId: string) => {
     setLoading(true);
     setError(null);

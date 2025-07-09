@@ -1,0 +1,196 @@
+{
+  "cuestionarios": [
+    {
+      "titulo": "Reactivos (síntomas físicos/psicológicos)",
+      "respuestas": [
+        "Poco o nada",
+        "Más o menos",
+        "Moderadamente",
+        "Severamente"
+      ],
+      "preguntas": [
+        "Entumecimiento, hormigueo de una o varias partes de su cuerpo",
+        "Sentir oleadas de calor (bochorno)",
+        "Debilitamiento de las piernas",
+        "Dificultad para relajarse",
+        "Miedo a que pase lo peor",
+        "Sensación de mareo",
+        "Opresión en el pecho o latidos acelerados",
+        "Inseguridad",
+        "Terror",
+        "Nerviosismo",
+        "Sensación de ahogo",
+        "Manos temblorosas",
+        "Cuerpo tembloroso",
+        "Miedo a perder el control",
+        "Dificultad para respirar",
+        "Miedo a morir",
+        "Asustado",
+        "Indigestión o malestar estomacal",
+        "Debilidad",
+        "Ruborizarse",
+        "Sudoración (no debida al calor)"
+      ]
+    },
+    {
+      "titulo": "Síntomas de psicosis: SCL 90R",
+      "respuestas": [
+        "Nada",
+        "Muy poco",
+        "Poco",
+        "Bastante",
+        "Mucho"
+      ],
+      "preguntas": [
+        "Perder la confianza en la mayoría de las personas",
+        "Sentir que me vigilan o que hablan de mí",
+        "Tener ideas o pensamientos que los demás no entienden",
+        "Sentir que los demás no me valoran como merezco",
+        "Sentir que se aprovechan de mí si los dejo",
+        "Sentir que alguien puede controlar mis pensamientos",
+        "Escuchar voces que otras personas no pueden oír",
+        "Creer que la gente sabe que estoy pensando",
+        "Tener ideas o pensamientos que no son los míos",
+        "Sentirme solo/a aun estando con gente",
+        "Pensar cosas sobre otros que me molestan",
+        "Ver cosas que otros no pueden ver",
+        "Sentir que debo ser castigado/a por mis pecados",
+        "Sentir que algo anda mal en mi cuerpo",
+        "Sentirme alejado/a de las demás personas",
+        "Sentir algo caminando o moviéndose en mi cuerpo",
+        "Pensar que en mi cabeza hay algo que no funciona bien"
+      ]
+    },
+    {
+      "titulo": "Inventario de Depresión",
+      "respuestas": [
+        "0",
+        "1",
+        "2",
+        "3"
+      ],
+      "preguntas": {
+        "1": [
+          "No me siento triste",
+          "Me siento triste",
+          "Me siento triste todo el tiempo y no puedo evitarlo",
+          "Estoy tan triste o tan infeliz que no puedo soportarlo"
+        ],
+        "2": [
+          "No siento que me vayan a castigar",
+          "Creo que me van a castigar",
+          "Siento que me van a castigar",
+          "Siento que me han castigado"
+        ],
+        "3": [
+          "Estoy tan esperanzado como en el futuro",
+          "No me siento tan esperanzado por el futuro",
+          "Siento que no hay esperanza para el futuro",
+          "Siento que el futuro es desesperanzador y que las cosas no pueden mejorar"
+        ],
+        "4": [
+          "No estoy desilusionado de mí mismo",
+          "Estoy desilusionado de mí mismo",
+          "Estoy disgustado conmigo mismo",
+          "Me odio"
+        ],
+        "5": [
+          "No me siento como un fracasado",
+          "Me siento más inútil o que los demás son mejores que yo",
+          "Me siento que he fallado, todo lo que veo son mis fracasos",
+          "Me siento super-juzgado por los demás"
+        ],
+        "6": [
+          "No me culpo por mis fallas",
+          "Me culpo todo el tiempo por mis debilidades o errores",
+          "Siempre estoy pensando en mis errores pasados",
+          "Siento que merezco ser castigado"
+        ],
+        "7": [
+          "Obtengo tanta satisfacción de las cosas como solía tenerla antes",
+          "Ya no obtengo verdadera satisfacción de nada",
+          "Nada me hace feliz",
+          "Estoy completamente desinteresado en todo"
+        ],
+        "8": [
+          "No tengo pensamientos suicidas",
+          "Tengo pensamientos suicidas pero no los llevaría a cabo",
+          "Me gustaría matarme",
+          "Me suicidaría si tuviera oportunidad"
+        ],
+        "9": [
+          "No me siento culpable",
+          "Me siento culpable gran parte del tiempo",
+          "Me siento culpable todo el tiempo",
+          "Me siento culpable todo el tiempo y no puedo dejar de pensar en eso"
+        ],
+        "10": [
+          "No lloro más de lo normal",
+          "Lloro más que antes",
+          "Actualmente lloro todo el tiempo",
+          "Antes podía llorar, pero ahora no lo puedo hacer a pesar de que tengo ganas"
+        ],
+        "11": [
+          "No me siento irritado",
+          "Me enojo o me irrito más fácilmente que antes",
+          "No soporto los ruidos por los que me irritaba antes",
+          "Me siento irritado todo el tiempo"
+        ],
+        "12": [
+          "Mi apetito es tan bueno como antes",
+          "Mi apetito no es tan bueno como antes",
+          "Mi apetito es muy pobre",
+          "No tengo apetito en lo absoluto"
+        ],
+        "13": [
+          "No he perdido mucho peso últimamente",
+          "He perdido más de 2 kilos",
+          "He perdido más de 5 kilos",
+          "He perdido más de 8 kilos"
+        ],
+        "14": [
+          "No estoy más preocupado por mi salud que antes",
+          "Estoy más preocupado por dolores o dificultad para respirar",
+          "Estoy muy preocupado por mi salud que no puedo pensar en nada más",
+          "Creo que tengo una enfermedad grave"
+        ],
+        "15": [
+          "Tomo decisiones como siempre lo he hecho",
+          "Me cuesta más tomar decisiones que antes",
+          "Tengo muchas dificultades para tomar decisiones importantes",
+          "No puedo tomar decisiones importantes en lo absoluto"
+        ],
+        "16": [
+          "No creo que luzco peor que antes",
+          "Estoy preocupado por verme feo o poco atractivo",
+          "Siento que hay un cambio en mi apariencia que me hace ver poco atractivo",
+          "Estoy completamente disgustado por cómo me veo"
+        ],
+        "17": [
+          "Tengo el mismo interés que antes en el sexo",
+          "Tengo menos interés en el sexo",
+          "Casi no tengo interés en el sexo",
+          "He perdido completamente el interés en el sexo"
+        ],
+        "18": [
+          "Todavía me intereso por mis pasatiempos o hacer algo",
+          "Estoy menos interesado por mis pasatiempos",
+          "No tengo interés por hacer nada",
+          "No puedo hacer ningún trabajo"
+        ],
+        "20": [
+          "Puedo dormir tan bien como antes",
+          "Ya no duermo tan bien como antes",
+          "Me despierto una o dos horas más temprano y me cuesta volverme a dormir",
+          "Me despierto muchas horas antes y no puedo volverme a dormir"
+        ],
+        "21": [
+          "No me canso más de lo de costumbre",
+          "Me canso más fácilmente que antes",
+          "Con cualquier cosa que haga me canso",
+          "Estoy muy cansado para hacer cualquier cosa"
+        ]
+      }
+    }
+  ]
+}

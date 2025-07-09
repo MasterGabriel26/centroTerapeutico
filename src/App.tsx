@@ -1,4 +1,5 @@
 import React, { useEffect } from 'react';
+import { inicializarPlantillasTests } from './features/tests_psicologicos/services/testPsicologicoService';
 import { Routes, Route, Navigate, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from './store/authStore';
 
@@ -25,6 +26,8 @@ import Familiares from './pages/Usuarios';
 import RegisterForm from './components/auth/RegisterForm';
 import Gastos from './pages/Gastos';
 import CrearPacientePage from './features/pacientes/pages/CrearPacientePage';
+import PublicTestPage from './pages/PublicTestPage';
+import TestEvaluationPage from './pages/TestEvaluationPage';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -33,6 +36,7 @@ const App: React.FC = () => {
 
   useEffect(() => {
     checkSession();
+    inicializarPlantillasTests();
   }, []);
 
   useEffect(() => {
@@ -47,8 +51,8 @@ const App: React.FC = () => {
           }
         }
       } else {
-        // Si el usuario no está autenticado y no está en login, redirigirlo a login
-        if (location.pathname !== '/login' && location.pathname !== '/register') {
+        // Si el usuario no está autenticado y no está en login, register o la página de test, redirigirlo a login
+        if (location.pathname !== '/login' && location.pathname !== '/register' && !location.pathname.startsWith('/test/')) {
           navigate('/login');
         }
       }
@@ -76,6 +80,9 @@ const App: React.FC = () => {
         <Route path="register" element={<RegisterForm />} />
       </Route>
 
+      {/* Ruta pública para realizar tests */}
+      <Route path="/test/:testId" element={<PublicTestPage />} />
+
       {/* Rutas protegidas */}
       <Route
         path="/"
@@ -95,6 +102,7 @@ const App: React.FC = () => {
         <Route path="gastos" element={<Gastos />} />
         <Route path="pagos" element={<Pagos />} />
         <Route path="mi-familiar" element={<FamiliarPage />} />
+        <Route path="/test-evaluation/:testId" element={<TestEvaluationPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
       </Route>

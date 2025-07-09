@@ -7,6 +7,7 @@ interface CardProps {
   className?: string;
   hoverable?: boolean;
   footer?: React.ReactNode;
+  onClick?: (event: React.MouseEvent<HTMLDivElement>) => void; // Add onClick prop
 }
 
 export const Card: React.FC<CardProps> = ({
@@ -16,6 +17,7 @@ export const Card: React.FC<CardProps> = ({
   className = '',
   hoverable = false,
   footer,
+  onClick, // Destructure onClick
 }) => {
   return (
     <div 
@@ -24,6 +26,7 @@ export const Card: React.FC<CardProps> = ({
         ${hoverable ? 'transition-all duration-200 hover:shadow-md' : ''}
         ${className}
       `}
+      onClick={onClick} // Pass onClick to the div
     >
       {(title || subtitle) && (
         <div className="px-4 sm:px-6 pt-4 sm:pt-5 pb-3">

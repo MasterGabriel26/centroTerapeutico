@@ -28,6 +28,7 @@ import { TabWithTooltip } from "./components/TabWithTooltip";
 import imagenEjemplo from "./ejemplo1.jpg"
 import CuentasTab from "./components/PacienteDetalleTabs/CuentasTab";
 import IngresosTab from "./components/PacienteDetalleTabs/IngresosTab";
+import TestsPsicologicosTab from "../tests_psicologicos/components/TestsPsicologicosTab";
 
 const PacienteDetallePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -262,6 +263,16 @@ const PacienteDetallePage: React.FC = () => {
                 >
                   Visitas
                 </TabWithTooltip>
+
+                <TabWithTooltip
+                  tooltip="Tests Psicológicos"
+                  isActive={tabIndex === 7}
+                  onClick={() => setTabIndex(7)}
+                  icon={FileText}
+                  className="px-3 py-2 text-xs sm:text-sm"
+                >
+                  Tests
+                </TabWithTooltip>
               </div>
             </div>
           </div>
@@ -292,6 +303,9 @@ const PacienteDetallePage: React.FC = () => {
               </TabPanel>
               <TabPanel>
                 <VisitasTab pacienteId={paciente.id!} />
+              </TabPanel>
+              <TabPanel>
+                <TestsPsicologicosTab pacienteId={paciente.id!} />
               </TabPanel>
             </Tabs>
           </div>

@@ -4,7 +4,7 @@
 import React, { useState, useEffect } from "react"
 import { doc, getDoc, collection, query, where, getDocs } from "firebase/firestore"
 import { db } from "../../../utils/firebase"
-import { Calendar, Clock, FileText, User, CreditCard, AlertCircle, Loader2, Activity, Phone, Mail } from "lucide-react"
+import { Calendar, Clock, FileText, User, CreditCard, AlertCircle, Loader2, Activity,Users, Phone, Mail,Pill } from "lucide-react"
 import { Button } from "../../../components/ui/Button"
 import { Card } from "../../../components/ui/Card"
 import { format, parseISO, differenceInDays } from "date-fns"
@@ -14,7 +14,8 @@ import { useSeguimientos } from "../../pacientes/hooks/useSeguimiento"
 import { useCuentaDeCobro } from "../../pagos/hooks/useCuentaDeCobro"
 import SeguimientoCard from "../components/SeguimientoCard"
 import MediaModal from "../components/MediaModal"
-
+import FamiliarRecetasTab from "../components/FamiliarRecetasTab"
+import FamiliarVisitasTab from "../components/FamiliarVisitasTab"
 type Paciente = {
   id: string
   nombre_completo: string
@@ -359,38 +360,67 @@ const handleMediaClick = (urls: string[], index: number, types: string[]) => {
 
           {/* Tabs */}
           <div className="bg-white rounded-2xl shadow-lg mb-8 overflow-hidden border-0">
-            <div className="flex border-b border-gray-100">
-              <button
-                className={`flex-1 py-4 px-6 font-semibold transition-all duration-200 ${
-                  activeTab === "seguimiento"
-                    ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                }`}
-                onClick={() => setActiveTab("seguimiento")}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Seguimiento
-                </div>
-              </button>
-              <button
-                className={`flex-1 py-4 px-6 font-semibold transition-all duration-200 ${
-                  activeTab === "pagos"
-                    ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
-                    : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
-                }`}
-                onClick={() => setActiveTab("pagos")}
-              >
-                <div className="flex items-center justify-center gap-2">
-                  <CreditCard className="h-5 w-5" />
-                  Pagos
-                </div>
-              </button>
-            </div>
 
+<div className="flex border-b border-gray-100">
+  <button
+    className={`flex-1 py-4 px-6 font-semibold transition-all duration-200 ${
+      activeTab === "seguimiento"
+        ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+    }`}
+    onClick={() => setActiveTab("seguimiento")}
+  >
+    <div className="flex items-center justify-center gap-2">
+      <Activity className="h-5 w-5" />
+      Seguimiento
+    </div>
+  </button>
+  <button
+    className={`flex-1 py-4 px-6 font-semibold transition-all duration-200 ${
+      activeTab === "recetas"
+        ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+    }`}
+    onClick={() => setActiveTab("recetas")}
+  >
+    <div className="flex items-center justify-center gap-2">
+      <Pill className="h-5 w-5" />
+      Recetas
+    </div>
+  </button>
+  <button
+    className={`flex-1 py-4 px-6 font-semibold transition-all duration-200 ${
+      activeTab === "visitas"
+        ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+    }`}
+    onClick={() => setActiveTab("visitas")}
+  >
+    <div className="flex items-center justify-center gap-2">
+      <Users className="h-5 w-5" />
+      Visitas
+    </div>
+  </button>
+  <button
+    className={`flex-1 py-4 px-6 font-semibold transition-all duration-200 ${
+      activeTab === "pagos"
+        ? "text-blue-600 bg-blue-50 border-b-2 border-blue-600"
+        : "text-gray-500 hover:text-gray-700 hover:bg-gray-50"
+    }`}
+    onClick={() => setActiveTab("pagos")}
+  >
+    <div className="flex items-center justify-center gap-2">
+      <CreditCard className="h-5 w-5" />
+      Pagos
+    </div>
+  </button>
+</div>
             {/* Contenido de tabs */}
             <div className="p-6">
-              {activeTab === "seguimiento" ? (
+              {activeTab === "visitas" ? (
+  <FamiliarVisitasTab />
+) :  activeTab === "recetas" ? (
+  <FamiliarRecetasTab />): activeTab === "seguimiento" ? (
                 <div className="space-y-8">
                   {/* Resumen */}
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

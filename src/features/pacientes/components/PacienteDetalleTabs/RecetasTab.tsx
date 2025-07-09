@@ -27,6 +27,7 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
   
   const [openModal, setOpenModal] = useState(false);
   const [motivo, setMotivo] = useState("");
+  const [riesgos, setRiesgos] = useState(""); // Nuevo estado para riesgos
   const [medicamentosReceta, setMedicamentosReceta] = useState<MedicamentoReceta[]>([]);
   const [currentMedicamento, setCurrentMedicamento] = useState<{
     medicamentoId: string;
@@ -92,45 +93,46 @@ const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
   }, [recetas]);
 
   // Cargar medicamentos disponibles
-useEffect(() => {
-  const medicamentosIds = obtenerMedicamentosUnicos();
-  const disponibles = medicamentosIds.map(id => {
-    const med = getMedicamentoById(id);
-    return med ? { id, nombre: med.nombre } : null;
-  }).filter(Boolean) as {id: string, nombre: string}[];
-  
-  setMedicamentosDisponibles(disponibles);
-}, [todosMedicamentos, obtenerMedicamentosUnicos, getMedicamentoById]);
-
+  useEffect(() => {
+    const medicamentosIds = obtenerMedicamentosUnicos();
+    const disponibles = medicamentosIds.map(id => {
+      const med = getMedicamentoById(id);
+      return med ? { id, nombre: med.nombre } : null;
+    }).filter(Boolean) as {id: string, nombre: string}[];
+    
+    setMedicamentosDisponibles(disponibles);
+  }, [todosMedicamentos, obtenerMedicamentosUnicos, getMedicamentoById]);
 
   // Filtrar recetas según término de búsqueda y estado
-const filteredRecetas = useMemo(() => {
-  return recetas.filter(receta => {
-    if (statusFilter === "active" && !receta.isActive) return false;
-    if (statusFilter === "inactive" && receta.isActive) return false;
-    
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
+  const filteredRecetas = useMemo(() => {
+    return recetas.filter(receta => {
+      if (statusFilter === "active" && !receta.isActive) return false;
+      if (statusFilter === "inactive" && receta.isActive) return false;
       
-      // Búsqueda en múltiples campos incluyendo el folio
-      const matchesMotivo = receta.motivo.toLowerCase().includes(term);
-      const matchesDoctor = (doctoresInfo[receta.idDoctor] || "").toLowerCase().includes(term);
-      const matchesFolio = receta.folio?.toLowerCase().includes(term); // Nueva línea para búsqueda por folio
-      const matchesMedicamento = receta.medicamentos.some(m => {
-        return (
-          m.nombre.toLowerCase().includes(term) || 
-          m.posologia.toLowerCase().includes(term)
-        );
-      });
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        
+        const matchesMotivo = receta.motivo.toLowerCase().includes(term);
+        const matchesDoctor = (doctoresInfo[receta.idDoctor] || "").toLowerCase().includes(term);
+        const matchesFolio = receta.folio?.toLowerCase().includes(term);
+        const matchesRiesgos = receta.riesgos?.toLowerCase().includes(term) || false;
+        const matchesMedicamento = receta.medicamentos.some(m => {
+          return (
+            m.nombre.toLowerCase().includes(term) || 
+            m.posologia.toLowerCase().includes(term)
+          );
+        });
+        
+        return matchesMotivo || matchesDoctor || matchesMedicamento || matchesFolio || matchesRiesgos;
+      }
       
-      return matchesMotivo || matchesDoctor || matchesMedicamento || matchesFolio; // Agregar matchesFolio
-    }
-    
-    return true;
-  });
-}, [recetas, searchTerm, statusFilter, doctoresInfo]);
+      return true;
+    });
+  }, [recetas, searchTerm, statusFilter, doctoresInfo]);
+
   const resetForm = useCallback(() => {
     setMotivo("");
+    setRiesgos("");
     setMedicamentosReceta([]);
     setCurrentMedicamento({
       medicamentoId: "",
@@ -411,6 +413,20 @@ const handleSubmit = useCallback(async () => {
               placeholder="Ej: Infección respiratoria"
               rows={2}
               required
+            />
+          </div>
+
+   <div className="mb-4">
+            <label htmlFor="riesgos" className="block text-sm font-medium text-gray-700 mb-1">
+              Riesgos detectados
+            </label>
+            <textarea
+              id="riesgos"
+              value={riesgos}
+              onChange={(e) => setRiesgos(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+              placeholder="Ej: Alergias conocidas, interacciones medicamentosas, etc."
+              rows={2}
             />
           </div>
 
@@ -846,6 +862,14 @@ const handleSubmit = useCallback(async () => {
                 <p className="text-sm text-gray-500 mb-1">Motivo</p>
                 <p className="font-medium">{detalleReceta.motivo}</p>
               </div>
+               {detalleReceta.riesgos && (
+                <div className="md:col-span-2">
+                  <p className="text-sm text-gray-500 mb-1">Riesgos detectados</p>
+                  <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200">
+                    <p className="text-yellow-800">{detalleReceta.riesgos}</p>
+                  </div>
+                </div>
+              )}
               <div>
                 <p className="text-sm text-gray-500 mb-1">Estado</p>
                 <p className={`font-medium ${

@@ -65,7 +65,8 @@ export const addReceta = async (pacienteId: string, data: Omit<Receta, 'id' | 'f
             total,
             fecha: new Date(),
             isActive: true,
-            folio
+            folio,
+            riesgos: data.riesgos || '' // Incluir riesgos si existe, sino cadena vacía
         };
         
         console.log('Datos completos de receta:', recetaCompleta); // Debug
@@ -130,7 +131,8 @@ export const getRecetas = async (pacienteId: string, options?: {
             fecha: data.fecha?.toDate() || null,
             isActive: data.isActive,
             total: data.total,
-            folio: data.folio
+            folio: data.folio,
+            riesgos: data.riesgos || '' // Incluir riesgos si existe, sino cadena vacía
         } as Receta;
     });
 };

@@ -18,4 +18,5 @@ export interface Receta {
     isActive: boolean;
     total: number; // Suma de todos los subtotales de medicamentos
     folio: string;
+    riesgos?: string; // Campo opcional para riesgos detectados
 }

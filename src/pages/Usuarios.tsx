@@ -374,218 +374,223 @@ const debugFirebaseCall = async () => {
     setShowProfileModal(true)
   }
 
-  // Funciones auxiliares
-
-
   return (
-    <div className="p-6 max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
-            <div className="p-2 bg-indigo-100 rounded-lg">
-              <Users className="text-indigo-600" size={28} />
-            </div>
-            Gestión de Usuarios
-          </h1>
-          <p className="text-gray-600 mt-2">Administra las cuentas registradas en el sistema</p>
-        </div>
-
-        <div className="flex gap-2">
-          <Button
-            onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700"
-          >
-            <Plus size={20} />
-            Nuevo Usuario
-          </Button>
-          
-          <Button onClick={testAuth} variant="outline">
-            Debug Auth
-          </Button>
-
-<Button onClick={testAuthAlt} variant="outline">
-  Test Auth Alt
-</Button>
-<Button onClick={debugFirebaseCall} variant="outline">
-  Debug Firebase
-</Button>
-         
-        </div>
-      </div>
-
-      {/* Filtros y búsqueda */}
-      <Card className="p-6 mb-6 bg-white shadow-sm">
-        <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
-          <div className="flex-1 w-full">
-            <div className="relative">
-              <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <Input
-                placeholder="Buscar por nombre o correo..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10 h-11"
-              />
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-2 w-full lg:w-auto">
-            {[
-              { value: "todos", label: "Todos", icon: <Users size={16} />, count: usuarios.length },
-              {
-                value: "familiar",
-                label: "Familiares",
-                icon: <User size={16} />,
-                count: usuarios.filter((u) => u.tipo === "familiar").length,
-              },
-              {
-                value: "medico",
-                label: "Médicos",
-                icon: <Stethoscope size={16} />,
-                count: usuarios.filter((u) => u.tipo === "medico").length,
-              },
-              {
-                value: "admin",
-                label: "Admins",
-                icon: <Shield size={16} />,
-                count: usuarios.filter((u) => u.tipo === "admin").length,
-              },
-              {
-                value: "nuevos",
-                label: "Nuevos",
-                icon: <BadgeCheck size={16} />,
-                count: usuarios.filter((u) => u.created_at === new Date().toLocaleDateString("es-MX")).length,
-              },
-            ].map((tipo) => (
-              <Button
-                key={tipo.value}
-                variant={filterTipo === tipo.value ? "primary" : "outline"}
-                onClick={() => setFilterTipo(tipo.value as any)}
-                className="flex items-center gap-2 h-11"
-              >
-                {tipo.icon}
-                {tipo.label}
-                <span
-                  className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
-                    filterTipo === tipo.value ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
-                  }`}
-                >
-                  {tipo.count}
-                </span>
-              </Button>
-            ))}
-          </div>
-        </div>
-      </Card>
-
-      {/* Contador de resultados */}
-      <div className="mb-6 flex justify-between items-center">
-        <p className="text-sm text-gray-600">
-          Mostrando <span className="font-semibold text-gray-900">{filteredUsuarios.length}</span> de{" "}
-          <span className="font-semibold text-gray-900">{usuarios.length}</span> usuarios
-        </p>
-      </div>
-
-      {/* Lista de usuarios */}
-      {loading ? (
-        <div className="grid gap-4">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="flex items-center space-x-4">
-                <div className="h-14 w-14 rounded-full bg-gray-200 animate-pulse" />
-                <div className="space-y-3 flex-1">
-                  <div className="h-5 w-[250px] bg-gray-200 rounded animate-pulse" />
-                  <div className="h-4 w-[200px] bg-gray-200 rounded animate-pulse" />
-                </div>
-                <div className="h-9 w-28 bg-gray-200 rounded animate-pulse" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      ) : filteredUsuarios.length === 0 ? (
-        <Card className="p-12 text-center bg-white">
-          <div className="flex flex-col items-center justify-center space-y-4">
-            <div className="p-4 bg-gray-100 rounded-full">
-              <Search className="w-8 h-8 text-gray-400" />
-            </div>
+    <div className="h-screen flex flex-col">
+      {/* Header fijo */}
+      <div className="bg-white shadow-sm z-10">
+        <div className="p-6 max-w-7xl mx-auto">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
-              <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron usuarios</h3>
-              <p className="text-gray-500">Intenta ajustar tus filtros de búsqueda o crear un nuevo usuario</p>
-            </div>
-            <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 mt-4">
-              <Plus size={18} />
-              Crear Usuario
-            </Button>
-          </div>
-        </Card>
-      ) : (
-        <div className="grid gap-4">
-          {filteredUsuarios.map((usuario) => (
-            <Card
-              key={usuario.id}
-              className="p-6 hover:shadow-lg transition-all duration-200 bg-white border border-gray-200"
-            >
-              <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                <div className="flex items-center gap-4 flex-1">
-                  <div className="relative">
-                    <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg shadow-md">
-                      {getInitials(usuario.nombre_completo || "Usuario")}
-                    </div>
-                    <div
-                      className={`absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-sm ${getRolColor(usuario.tipo)}`}
-                    >
-                      {getRolIcon(usuario.tipo)}
-                    </div>
-                  </div>
-
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 truncate">{usuario.nombre_completo}</h3>
-                      <span
-                        className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getRolColor(usuario.tipo)}`}
-                      >
-                        {getRolIcon(usuario.tipo)}
-                        {usuario.tipo.charAt(0).toUpperCase() + usuario.tipo.slice(1)}
-                      </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span className="truncate">{usuario.email}</span>
-                      </div>
-
-                      {usuario.telefono && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                          <span>{usuario.telefono}</span>
-                        </div>
-                      )}
-
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                        <span>Registrado: {usuario.created_at}</span>
-                      </div>
-                    </div>
-                  </div>
+              <h1 className="text-3xl font-bold text-gray-900 flex items-center gap-3">
+                <div className="p-2 bg-indigo-100 rounded-lg">
+                  <Users className="text-indigo-600" size={28} />
                 </div>
+                Gestión de Usuarios
+              </h1>
+              <p className="text-gray-600 mt-2">Administra las cuentas registradas en el sistema</p>
+            </div>
 
-                <div className="flex gap-2 lg:flex-col lg:w-auto">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => verPerfil(usuario)}
-                    className="flex items-center gap-2 hover:bg-gray-50"
-                  >
-                    <Eye className="w-4 h-4" />
-                    Ver Perfil
-                  </Button>
+            <div className="flex gap-2">
+              <Button
+                onClick={() => setShowCreateModal(true)}
+                className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700"
+              >
+                <Plus size={20} />
+                Nuevo Usuario
+              </Button>
+              
+              <Button onClick={testAuth} variant="outline">
+                Debug Auth
+              </Button>
+
+              <Button onClick={testAuthAlt} variant="outline">
+                Test Auth Alt
+              </Button>
+              <Button onClick={debugFirebaseCall} variant="outline">
+                Debug Firebase
+              </Button>
+            </div>
+          </div>
+
+          {/* Filtros y búsqueda */}
+          <Card className="p-6 mt-6 bg-white shadow-sm">
+            <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center">
+              <div className="flex-1 w-full">
+                <div className="relative">
+                  <Search size={20} className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <Input
+                    placeholder="Buscar por nombre o correo..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 h-11"
+                  />
                 </div>
               </div>
-            </Card>
-          ))}
+
+              <div className="flex flex-wrap gap-2 w-full lg:w-auto">
+                {[
+                  { value: "todos", label: "Todos", icon: <Users size={16} />, count: usuarios.length },
+                  {
+                    value: "familiar",
+                    label: "Familiares",
+                    icon: <User size={16} />,
+                    count: usuarios.filter((u) => u.tipo === "familiar").length,
+                  },
+                  {
+                    value: "medico",
+                    label: "Médicos",
+                    icon: <Stethoscope size={16} />,
+                    count: usuarios.filter((u) => u.tipo === "medico").length,
+                  },
+                  {
+                    value: "admin",
+                    label: "Admins",
+                    icon: <Shield size={16} />,
+                    count: usuarios.filter((u) => u.tipo === "admin").length,
+                  },
+                  {
+                    value: "nuevos",
+                    label: "Nuevos",
+                    icon: <BadgeCheck size={16} />,
+                    count: usuarios.filter((u) => u.created_at === new Date().toLocaleDateString("es-MX")).length,
+                  },
+                ].map((tipo) => (
+                  <Button
+                    key={tipo.value}
+                    variant={filterTipo === tipo.value ? "primary" : "outline"}
+                    onClick={() => setFilterTipo(tipo.value as any)}
+                    className="flex items-center gap-2 h-11"
+                  >
+                    {tipo.icon}
+                    {tipo.label}
+                    <span
+                      className={`ml-1 px-2 py-0.5 rounded-full text-xs ${
+                        filterTipo === tipo.value ? "bg-white/20 text-white" : "bg-gray-100 text-gray-600"
+                      }`}
+                    >
+                      {tipo.count}
+                    </span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+          </Card>
+
+          {/* Contador de resultados */}
+          <div className="mt-6 mb-4 flex justify-between items-center">
+            <p className="text-sm text-gray-600">
+              Mostrando <span className="font-semibold text-gray-900">{filteredUsuarios.length}</span> de{" "}
+              <span className="font-semibold text-gray-900">{usuarios.length}</span> usuarios
+            </p>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* Contenido con scroll */}
+      <div className="flex-1 overflow-y-auto">
+        <div className="p-6 max-w-7xl mx-auto">
+          {/* Lista de usuarios */}
+          {loading ? (
+            <div className="grid gap-4">
+              {[...Array(6)].map((_, i) => (
+                <Card key={i} className="p-6">
+                  <div className="flex items-center space-x-4">
+                    <div className="h-14 w-14 rounded-full bg-gray-200 animate-pulse" />
+                    <div className="space-y-3 flex-1">
+                      <div className="h-5 w-[250px] bg-gray-200 rounded animate-pulse" />
+                      <div className="h-4 w-[200px] bg-gray-200 rounded animate-pulse" />
+                    </div>
+                    <div className="h-9 w-28 bg-gray-200 rounded animate-pulse" />
+                  </div>
+                </Card>
+              ))}
+            </div>
+          ) : filteredUsuarios.length === 0 ? (
+            <Card className="p-12 text-center bg-white">
+              <div className="flex flex-col items-center justify-center space-y-4">
+                <div className="p-4 bg-gray-100 rounded-full">
+                  <Search className="w-8 h-8 text-gray-400" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-semibold text-gray-900 mb-2">No se encontraron usuarios</h3>
+                  <p className="text-gray-500">Intenta ajustar tus filtros de búsqueda o crear un nuevo usuario</p>
+                </div>
+                <Button onClick={() => setShowCreateModal(true)} className="flex items-center gap-2 mt-4">
+                  <Plus size={18} />
+                  Crear Usuario
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {filteredUsuarios.map((usuario) => (
+                <Card
+                  key={usuario.id}
+                  className="p-6 hover:shadow-lg transition-all duration-200 bg-white border border-gray-200"
+                >
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                      <div className="relative">
+                        <div className="h-14 w-14 rounded-full bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold text-lg shadow-md">
+                          {getInitials(usuario.nombre_completo || "Usuario")}
+                        </div>
+                        <div
+                          className={`absolute -bottom-1 -right-1 p-1 rounded-full bg-white shadow-sm ${getRolColor(usuario.tipo)}`}
+                        >
+                          {getRolIcon(usuario.tipo)}
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-3 mb-2">
+                          <h3 className="text-lg font-semibold text-gray-900 truncate">{usuario.nombre_completo}</h3>
+                          <span
+                            className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${getRolColor(usuario.tipo)}`}
+                          >
+                            {getRolIcon(usuario.tipo)}
+                            {usuario.tipo.charAt(0).toUpperCase() + usuario.tipo.slice(1)}
+                          </span>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span className="truncate">{usuario.email}</span>
+                          </div>
+
+                          {usuario.telefono && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                              <span>{usuario.telefono}</span>
+                            </div>
+                          )}
+
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                            <span>Registrado: {usuario.created_at}</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="flex gap-2 lg:flex-col lg:w-auto">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => verPerfil(usuario)}
+                        className="flex items-center gap-2 hover:bg-gray-50"
+                      >
+                        <Eye className="w-4 h-4" />
+                        Ver Perfil
+                      </Button>
+                    </div>
+                  </div>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Modal para crear usuario */}
       {showCreateModal && (

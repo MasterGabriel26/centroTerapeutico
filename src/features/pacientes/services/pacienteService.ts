@@ -2,13 +2,14 @@
 import { db } from '../../../utils/firebase';
 import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
 import { Paciente, CrearPacienteData } from '../types/paciente';
+
 const pacientesRef = collection(db, "pacientes");
 
 export const addPaciente = async (data: CrearPacienteData) => {
   // Separar los datos del paciente de los datos del ingreso
   const { fecha_ingreso, motivo_ingreso, ...pacienteData } = data;
 
-  // Payload para el paciente (sin fecha_ingreso ni motivo_ingreso)
+  // Payload para el paciente
   const pacientePayload: Omit<Paciente, "id"> = {
     ...pacienteData,
     estado: "activo",
@@ -25,15 +26,26 @@ export const addPaciente = async (data: CrearPacienteData) => {
     motivo_ingreso,
     voluntario: data.voluntario,
     creado: new Date().toISOString(),
+    evaluacion_inicial: {
+      fecha: new Date().toISOString(),
+      evaluador: "Nombre del evaluador" // Esto debería ser dinámico
+    }
   };
 
   const ingresosRef = collection(db, `pacientes/${pacienteDocRef.id}/ingresos`);
   await addDoc(ingresosRef, ingresoPayload);
 
+  // 3. Crear subcolección para seguimiento de consumo
+  const consumoRef = collection(db, `pacientes/${pacienteDocRef.id}/seguimiento_consumo`);
+  await addDoc(consumoRef, {
+    fecha: new Date().toISOString(),
+    sustancias: data.sustancias_consumidas,
+    observaciones: "Registro inicial"
+  });
+
   return pacienteDocRef.id;
 };
 
-// features/pacientes/services/pacienteService.ts
 export const getPacienteById = async (id: string): Promise<Paciente | null> => {
   console.log("🔍 Buscando paciente con ID:", id); // DEBUG
   

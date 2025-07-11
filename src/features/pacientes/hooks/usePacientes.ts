@@ -1,9 +1,7 @@
 // features/pacientes/hooks/usePacientes.ts
-
+import { useState, useCallback } from "react";
 import { addPaciente, updatePaciente, getPacienteById } from "../services/pacienteService";
 import { CrearPacienteData, Paciente } from "../types/paciente";
-// features/pacientes/hooks/usePacientes.ts
-import { useState, useCallback } from "react"; // ← Agregar useCallback
 
 export const usePacientes = () => {
   const [loading, setLoading] = useState(false);
@@ -13,11 +11,20 @@ export const usePacientes = () => {
     setLoading(true);
     setError(null);
     try {
+      // Validación de datos requeridos
+      if (!paciente.sustancias_consumidas || paciente.sustancias_consumidas.length === 0) {
+        throw new Error("Debe registrar al menos una sustancia consumida");
+      }
+      
+      if (!paciente.quien_lo_trajo?.nombre || !paciente.quien_lo_trajo?.parentesco) {
+        throw new Error("Debe especificar quién trajo al paciente");
+      }
+      
       const id = await addPaciente(paciente);
       return id;
     } catch (err: any) {
       console.error("Error al crear paciente:", err);
-      setError("No se pudo crear el paciente.");
+      setError(err.message || "No se pudo crear el paciente.");
       return null;
     } finally {
       setLoading(false);

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Search, CreditCard, Check, Calendar, FileDown } from "lucide-react";
+import { Search, CreditCard, Check, Calendar, FileDown, AlertCircle } from "lucide-react";
 import { useTodasLasCuentas, useResumenPagos } from "../../features/pagos/hooks/useCuentaDeCobro";
 import { CuentaCobro } from "../../features/pagos/types/cuenta_cobro";
 import { exportarPagosFiltradosExcel } from "../../features/pagos/services/cuentaCobroService";
@@ -15,15 +15,20 @@ const PagosPage = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [filterEstado, setFilterEstado] = useState<"todos" | CuentaCobro["estado"]>("todos");
   const [showExportModal, setShowExportModal] = useState(false);
+  const [showPendientes, setShowPendientes] = useState(false); // Nuevo estado para alternar vistas
 
   const estadosDisponibles = ["todos", "generado", "aprobada", "enviada", "pagada", "rechazada", "anulado"];
 
+  // Filtrar cuentas según búsqueda y estado
   const cuentasFiltradas = cuentas.filter((cuenta) => {
     const nombrePaciente = cuenta.paciente_nombre?.toLowerCase() || "";
     const matchesSearch = nombrePaciente.includes(searchQuery.toLowerCase());
     const matchesEstado = filterEstado === "todos" || cuenta.estado === filterEstado;
     return matchesSearch && matchesEstado;
   });
+
+  // Obtener solo las cuentas con estado "generado" (no pagadas)
+  const cuentasPendientes = cuentas.filter(cuenta => cuenta.estado === "generado");
 
   const handleExportarExcel = async ({ estado, desde, hasta }: { estado: string; desde: string; hasta: string }) => {
     const cuentasFiltradas = cuentas.filter((c) => {
@@ -141,43 +146,106 @@ const PagosPage = () => {
           <p className="text-sm sm:text-base text-gray-500">Historial de cuentas de cobro de todos los pacientes</p>
         </div>
 
-        {/* BUSCADOR Y FILTROS */}
-        <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
-          <div className="flex flex-col gap-4">
-            <div className="w-full">
-              <Input
-                placeholder="Buscar por nombre del paciente..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                leftIcon={<Search size={18} />}
-              />
+        {/* BOTONES PARA ALTERNAR VISTA */}
+        <div className="flex gap-2 mb-6">
+          <Button
+            variant={!showPendientes ? "primary" : "outline"}
+            onClick={() => setShowPendientes(false)}
+          >
+            Todos los pagos
+          </Button>
+          <Button
+            variant={showPendientes ? "primary" : "outline"}
+            onClick={() => setShowPendientes(true)}
+          >
+            <div className="flex items-center gap-2">
+              <span>Pendientes de pago</span>
+              {cuentasPendientes.length > 0 && (
+                <span className="bg-red-500 text-white text-xs rounded-full px-2 py-1">
+                  {cuentasPendientes.length}
+                </span>
+              )}
             </div>
-            <div className="overflow-x-auto pb-2">
-              <div className="flex gap-2 min-w-max">
-                {estadosDisponibles.map((estado) => (
-                  <Button
-                    key={estado}
-                    variant={filterEstado === estado ? "primary" : "outline"}
-                    onClick={() => setFilterEstado(estado as any)}
-                    className="text-xs sm:text-sm whitespace-nowrap"
-                  >
-                    {estado[0].toUpperCase() + estado.slice(1)}
-                  </Button>
-                ))}
-              </div>
-            </div>
-          </div>
+          </Button>
         </div>
 
-        {/* TABLA CON SCROLL */}
-        <div className="w-full">
-          <DataTable
-            columns={columns}
-            data={cuentasFiltradas}
-            loading={loading}
-            emptyText="No hay pagos registrados"
-          />
-        </div>
+        {showPendientes ? (
+          <>
+            {/* SECCIÓN DE PAGOS PENDIENTES */}
+            <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <AlertCircle className="text-yellow-600" size={20} />
+                  <h2 className="text-lg font-semibold">Pacientes con pagos pendientes</h2>
+                </div>
+                <p className="text-sm text-gray-500">
+                  Total pendiente: <span className="font-bold">${estadoTotales["generado"]?.toLocaleString("es-MX") || 0}</span>
+                </p>
+              </div>
+
+              {/* BUSCADOR PARA PENDIENTES */}
+              <div className="mb-4">
+                <Input
+                  placeholder="Buscar pacientes pendientes..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  leftIcon={<Search size={18} />}
+                />
+              </div>
+
+              {/* TABLA DE PENDIENTES */}
+              <DataTable
+                columns={columns}
+                data={cuentasPendientes.filter(cuenta => 
+                  cuenta.paciente_nombre?.toLowerCase().includes(searchQuery.toLowerCase())
+                )}
+                loading={loading}
+                emptyText="No hay pagos pendientes"
+              />
+            </div>
+          </>
+        ) : (
+          <>
+            {/* SECCIÓN ORIGINAL (TODOS LOS PAGOS) */}
+            {/* BUSCADOR Y FILTROS */}
+            <div className="bg-white rounded-xl shadow-sm p-4 mb-6">
+              <div className="flex flex-col gap-4">
+                <div className="w-full">
+                  <Input
+                    placeholder="Buscar por nombre del paciente..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    leftIcon={<Search size={18} />}
+                  />
+                </div>
+                <div className="overflow-x-auto pb-2">
+                  <div className="flex gap-2 min-w-max">
+                    {estadosDisponibles.map((estado) => (
+                      <Button
+                        key={estado}
+                        variant={filterEstado === estado ? "primary" : "outline"}
+                        onClick={() => setFilterEstado(estado as any)}
+                        className="text-xs sm:text-sm whitespace-nowrap"
+                      >
+                        {estado[0].toUpperCase() + estado.slice(1)}
+                      </Button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* TABLA CON SCROLL */}
+            <div className="w-full">
+              <DataTable
+                columns={columns}
+                data={cuentasFiltradas}
+                loading={loading}
+                emptyText="No hay pagos registrados"
+              />
+            </div>
+          </>
+        )}
 
         {/* MODAL EXPORTACIÓN */}
         <ExportarPagosModal

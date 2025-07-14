@@ -1,50 +1,59 @@
 // features/pacientes/services/pacienteService.ts
 import { db } from '../../../utils/firebase';
-import { collection, addDoc, getDocs, doc, updateDoc, getDoc } from "firebase/firestore";
+import { collection, addDoc, getDocs, doc, updateDoc, getDoc,setDoc } from "firebase/firestore";
 import { Paciente, CrearPacienteData } from '../types/paciente';
 
 const pacientesRef = collection(db, "pacientes");
 
 export const addPaciente = async (data: CrearPacienteData) => {
-  // Separar los datos del paciente de los datos del ingreso
-  const { fecha_ingreso, motivo_ingreso, ...pacienteData } = data;
+  try {
+    // Separar los datos del paciente de los datos del ingreso
+    const { fecha_ingreso, motivo_ingreso, evaluador, quien_lo_trajo, ...pacienteData } = data;
 
-  // Payload para el paciente
-  const pacientePayload: Omit<Paciente, "id"> = {
-    ...pacienteData,
-    estado: "activo",
-    creado: new Date().toISOString(),
-  };
+    // 1. Crear paciente
+    const pacienteDocRef = await addDoc(pacientesRef, {
+      ...pacienteData,
+      estado: "activo",
+      creado: new Date().toISOString(),
+    });
 
-  // 1. Crear paciente
-  const pacienteDocRef = await addDoc(pacientesRef, pacientePayload);
+    // 2. Crear subcolección de ingresos con ingreso inicial
+    const ingresosRef = collection(db, `pacientes/${pacienteDocRef.id}/ingresos`);
+    await addDoc(ingresosRef, {
+      fecha_ingreso,
+      fecha_salida: "",
+      motivo_ingreso,
+      voluntario: data.voluntario,
+      evaluador,
+      creado: new Date().toISOString(),
+    });
 
-  // 2. Crear subcolección de ingresos con ingreso inicial
-  const ingresoPayload = {
-    fecha_ingreso,
-    fecha_salida: "",
-    motivo_ingreso,
-    voluntario: data.voluntario,
-    creado: new Date().toISOString(),
-    evaluacion_inicial: {
-      fecha: new Date().toISOString(),
-      evaluador: "Nombre del evaluador" // Esto debería ser dinámico
+    // 3. Crear familiar en subcolección familiares si hay información
+    if (quien_lo_trajo && quien_lo_trajo.nombre && quien_lo_trajo.parentesco && quien_lo_trajo.telefono) {
+      const familiaresRef = collection(db, `pacientes/${pacienteDocRef.id}/familiares`);
+      
+      // Creamos un ID simple basado en el nombre (puedes ajustar esto)
+      const familiarId = quien_lo_trajo.nombre.toLowerCase().replace(/\s+/g, '_');
+      
+      await setDoc(doc(familiaresRef, familiarId), {
+        nombre: quien_lo_trajo.nombre,
+        parentesco: quien_lo_trajo.parentesco,
+        telefono1: quien_lo_trajo.telefono,
+        telefono2: "",
+        email: quien_lo_trajo.direccion.includes('@') ? quien_lo_trajo.direccion : "", // Asumimos que si tiene @ es email
+        direccion: quien_lo_trajo.direccion.includes('@') ? "" : quien_lo_trajo.direccion,
+        principal: true, // Marcamos como familiar principal
+        creado: new Date().toISOString()
+      });
     }
-  };
 
-  const ingresosRef = collection(db, `pacientes/${pacienteDocRef.id}/ingresos`);
-  await addDoc(ingresosRef, ingresoPayload);
-
-  // 3. Crear subcolección para seguimiento de consumo
-  const consumoRef = collection(db, `pacientes/${pacienteDocRef.id}/seguimiento_consumo`);
-  await addDoc(consumoRef, {
-    fecha: new Date().toISOString(),
-    sustancias: data.sustancias_consumidas,
-    observaciones: "Registro inicial"
-  });
-
-  return pacienteDocRef.id;
+    return pacienteDocRef.id;
+  } catch (error) {
+    console.error("Error al crear paciente y familiar:", error);
+    throw error;
+  }
 };
+
 
 export const getPacienteById = async (id: string): Promise<Paciente | null> => {
   console.log("🔍 Buscando paciente con ID:", id); // DEBUG

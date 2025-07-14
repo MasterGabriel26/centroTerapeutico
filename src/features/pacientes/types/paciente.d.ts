@@ -31,7 +31,6 @@ export interface Paciente {
   personas_con_vive: string;
   tiene_pareja: boolean;
   tiempo_relacion?: string;
-  
   // Información de ingreso
   quien_lo_trajo: {
     nombre: string;

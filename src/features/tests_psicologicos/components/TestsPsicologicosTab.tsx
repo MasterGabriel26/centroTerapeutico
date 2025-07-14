@@ -262,14 +262,27 @@ const TestsPsicologicosTab: React.FC<TestsPsicologicosTabProps> = ({ pacienteId 
                 >
                   Consultar Test
                 </button>
-                {test.estado === 'diligenciado' && (
+             
                   <button
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
                     onClick={() => handleAnalyzeTest(test.id)}
                   >
                     Ver Análisis
+                  </button>                 
+                
+                  <button
+                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 w-full text-left"
+                    onClick={() => {
+                      if (test.tituloTest.includes('Inventario de Depresión')) {
+                        navigate(`/test-depresion-results/${test.id}`);
+                      } else {
+                        navigate(`/test-results/${test.id}`);
+                      }
+                    }}
+                  >
+                    Imprimir
                   </button>
-                )}
+               
               </>
             );
           })()}

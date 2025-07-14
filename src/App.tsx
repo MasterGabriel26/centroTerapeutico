@@ -28,6 +28,8 @@ import Gastos from './pages/Gastos';
 import CrearPacientePage from './features/pacientes/pages/CrearPacientePage';
 import PublicTestPage from './pages/PublicTestPage';
 import TestEvaluationPage from './pages/TestEvaluationPage';
+import TestResultPdfPage from './features/tests_psicologicos/pages/TestResultPdfPage';
+import InventarioDepresionPdfPage from './features/tests_psicologicos/pages/InventarioDepresionPdfPage';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -103,6 +105,8 @@ const App: React.FC = () => {
         <Route path="pagos" element={<Pagos />} />
         <Route path="mi-familiar" element={<FamiliarPage />} />
         <Route path="/test-evaluation/:testId" element={<TestEvaluationPage />} />
+        <Route path="/test-results/:testId" element={<TestResultPdfPage />} />
+        <Route path="/test-depresion-results/:testId" element={<InventarioDepresionPdfPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
       </Route>

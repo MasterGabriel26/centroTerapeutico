@@ -82,3 +82,8 @@ export interface Paciente {
   expectativas_tratamiento: string;
   apoyo_familiar: 'alto' | 'medio' | 'bajo' | 'ninguno';
 }
+
+export interface CrearPacienteData extends Omit<Paciente, 'id' | 'estado' | 'creado'> {
+  fecha_ingreso: string;
+  motivo_ingreso: string;
+}

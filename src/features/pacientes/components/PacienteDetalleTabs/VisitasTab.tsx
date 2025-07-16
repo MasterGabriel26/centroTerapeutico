@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
 import { 
   Plus, 
@@ -14,7 +15,8 @@ import {
   Users,
   Clock,
   Filter,
-  X
+  X,
+  FileDown
 } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
@@ -25,6 +27,7 @@ import { getDoc, doc } from "firebase/firestore";
 import { db } from "../../../../utils/firebase";
 
 const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
+  const navigate = useNavigate();
   const { usuario: currentUser } = useAuthStore();
   
   const { 
@@ -204,15 +207,26 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
           </p>
         </div>
         
-        <Button
-          variant="primary"
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => setOpenModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-full sm:w-auto text-sm"
-        >
-          <span className="hidden sm:inline">Nueva Visita</span>
-          <span className="sm:hidden">Nueva</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<FileDown className="w-4 h-4" />}
+            onClick={() => navigate(`/pacientes/${pacienteId}/visitas/pdf`)}
+            className="bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto text-sm"
+          >
+            <span className="hidden sm:inline">Generar PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => setOpenModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-full sm:w-auto text-sm"
+          >
+            <span className="hidden sm:inline">Nueva Visita</span>
+            <span className="sm:hidden">Nueva</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filtros responsivos */}

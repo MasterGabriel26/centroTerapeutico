@@ -1,3 +1,4 @@
+import { useNavigate } from "react-router-dom";
 import React, { useState } from "react";
 import { useCuentaDeCobro } from "../../../pagos/hooks/useCuentaDeCobro";
 import { Button } from "../../../../components/ui/Button";
@@ -18,10 +19,12 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  FileDown
 } from "lucide-react";
 
 const CuentasTab = ({ pacienteId }: { pacienteId: string }) => {
+  const navigate = useNavigate();
   const { cuentas, loading, refetch, pacientes, usuarios } = useCuentaDeCobro();
   const [showModal, setShowModal] = useState(false);
   const [cuentaSeleccionada, setCuentaSeleccionada] = useState<CuentaCobro | null>(null);
@@ -127,16 +130,28 @@ const CuentasTab = ({ pacienteId }: { pacienteId: string }) => {
             Listado de cuentas generadas para este paciente.
           </p>
         </div>
-        <Button 
-          variant="primary" 
-          size="sm" 
-          onClick={() => setShowModal(true)}
-          icon={<Plus className="w-4 h-4" />}
-          className="w-full sm:w-auto text-sm"
-        >
-          <span className="hidden sm:inline">Nueva cuenta de cobro</span>
-          <span className="sm:hidden">Nueva cuenta</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button 
+            variant="secondary" 
+            size="sm" 
+            onClick={() => navigate(`/pacientes/${pacienteId}/cuentas/pdf`)}
+            icon={<FileDown className="w-4 h-4" />}
+            className="w-full sm:w-auto text-sm"
+          >
+            <span className="hidden sm:inline">Generar PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
+          <Button 
+            variant="primary" 
+            size="sm" 
+            onClick={() => setShowModal(true)}
+            icon={<Plus className="w-4 h-4" />}
+            className="w-full sm:w-auto text-sm"
+          >
+            <span className="hidden sm:inline">Nueva cuenta de cobro</span>
+            <span className="sm:hidden">Nueva cuenta</span>
+          </Button>
+        </div>
       </div>
 
       {/* Filtros responsivos */}

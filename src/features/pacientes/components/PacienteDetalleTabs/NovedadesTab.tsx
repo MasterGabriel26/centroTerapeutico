@@ -1,5 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useRef } from "react";
-import { Plus, Trash2, AlertTriangle, User, Loader2, Eye, X, ChevronLeft, ChevronRight,ImageIcon, RefreshCw,Search } from "lucide-react";
+import { Plus, Trash2, AlertTriangle, User, Loader2, Eye, X, ChevronLeft, ChevronRight,ImageIcon, RefreshCw,Search, FileDown } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import { useNovedades } from "../../hooks/useNovedades";
@@ -10,6 +11,7 @@ import { db } from "../../../../utils/firebase";
 import Compressor from "compressorjs";
 
 const NovedadesTab = ({ pacienteId }: { pacienteId: string }) => {
+  const navigate = useNavigate();
   const { usuario: doctor } = useAuthStore();
   
   const { 
@@ -247,14 +249,24 @@ const NovedadesTab = ({ pacienteId }: { pacienteId: string }) => {
           </p>
         </div>
         
-        <Button
-          variant="primary"
-          icon={<Plus size={16} />}
-          onClick={() => setOpenModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
-        >
-          Registrar Novedad
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<FileDown size={16} />}
+            onClick={() => navigate(`/pacientes/${pacienteId}/novedades/pdf`)}
+            className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+          >
+            Generar PDF
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Plus size={16} />}
+            onClick={() => setOpenModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm"
+          >
+            Registrar Novedad
+          </Button>
+        </div>
       </div>
 
       {/* Barra de búsqueda y filtros */}

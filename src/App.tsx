@@ -30,6 +30,14 @@ import PublicTestPage from './pages/PublicTestPage';
 import TestEvaluationPage from './pages/TestEvaluationPage';
 import TestResultPdfPage from './features/tests_psicologicos/pages/TestResultPdfPage';
 import InventarioDepresionPdfPage from './features/tests_psicologicos/pages/InventarioDepresionPdfPage';
+import InfoGeneralPdf from './features/pacientes/pages/InfoGeneralPdf';
+import FamiliaresPdfPage from './features/pacientes/pages/FamiliaresPdfPage';
+import CuentasPdfPage from './features/pacientes/pages/CuentasPdfPage';
+import IngresosPdfPage from './features/pacientes/pages/IngresosPdfPage';
+import NovedadesPdfPage from './features/pacientes/pages/NovedadesPdfPage';
+import RecetasPdfPage from './features/pacientes/pages/RecetasPdfPage';
+import SeguimientosPdfPage from './features/pacientes/pages/SeguimientosPdfPage';
+import VisitasPdfPage from './features/pacientes/pages/VisitasPdfPage';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -107,6 +115,14 @@ const App: React.FC = () => {
         <Route path="/test-evaluation/:testId" element={<TestEvaluationPage />} />
         <Route path="/test-results/:testId" element={<TestResultPdfPage />} />
         <Route path="/test-depresion-results/:testId" element={<InventarioDepresionPdfPage />} />
+        <Route path="/pacientes/:pacienteId/pdf" element={<InfoGeneralPdf />} />
+        <Route path="/pacientes/:pacienteId/familiares/pdf" element={<FamiliaresPdfPage />} />
+        <Route path="/pacientes/:pacienteId/cuentas/pdf" element={<CuentasPdfPage />} />
+        <Route path="/pacientes/:pacienteId/ingresos/pdf" element={<IngresosPdfPage />} />
+        <Route path="/pacientes/:pacienteId/novedades/pdf" element={<NovedadesPdfPage />} />
+        <Route path="/pacientes/:pacienteId/recetas/pdf" element={<RecetasPdfPage />} />
+        <Route path="/pacientes/:pacienteId/seguimientos/pdf" element={<SeguimientosPdfPage />} />
+        <Route path="/pacientes/:pacienteId/visitas/pdf" element={<VisitasPdfPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
       </Route>

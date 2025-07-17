@@ -1,6 +1,7 @@
 // features/pacientes/components/PacienteDetalleTabs/SeguimientosTab.tsx
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Plus, Search, Filter, Calendar, FileText, Trash2, Eye, ChevronDown, ChevronUp, X, ImageIcon, Clock, User, VideoIcon } from "lucide-react";
+import { Plus, Search, Filter, Calendar, FileText, Trash2, Eye, ChevronDown, ChevronUp, X, ImageIcon, Clock, User, VideoIcon, FileDown } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import { storage } from "../../../../utils/firebase";
@@ -18,6 +19,7 @@ type SelectedFile = {
 };
 
 const SeguimientosTab = ({ pacienteId }: { pacienteId: string }) => {
+  const navigate = useNavigate();
   const { usuario } = useAuthStore();
   const { seguimientos, error, fetchSeguimientos, agregarSeguimiento, toggleSeguimientoStatus } = useSeguimientos(pacienteId);
   const [openModal, setOpenModal] = useState(false);
@@ -290,15 +292,26 @@ const SeguimientosTab = ({ pacienteId }: { pacienteId: string }) => {
           </p>
         </div>
         
-        <Button
-          variant="primary"
-          icon={<Plus className="w-4 h-4" />}
-          onClick={() => setOpenModal(true)}
-          className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-full sm:w-auto text-sm"
-        >
-          <span className="hidden sm:inline">Nuevo Seguimiento</span>
-          <span className="sm:hidden">Nuevo</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="secondary"
+            icon={<FileDown className="w-4 h-4" />}
+            onClick={() => navigate(`/pacientes/${pacienteId}/seguimientos/pdf`)}
+            className="bg-green-600 hover:bg-green-700 text-white shadow-sm w-full sm:w-auto text-sm"
+          >
+            <span className="hidden sm:inline">Generar PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Plus className="w-4 h-4" />}
+            onClick={() => setOpenModal(true)}
+            className="bg-blue-600 hover:bg-blue-700 text-white shadow-sm w-full sm:w-auto text-sm"
+          >
+            <span className="hidden sm:inline">Nuevo Seguimiento</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        </div>
       </div>
 
       {/* Barra de búsqueda y filtros responsiva */}

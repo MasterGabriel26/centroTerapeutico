@@ -14,7 +14,8 @@ import {
   Heart,
   DollarSign,
   Briefcase,
-  Clock
+  Clock,
+  FileDown
 } from "lucide-react";
 
 const InfoGeneral = ({ paciente }: { paciente: Paciente }) => {
@@ -65,14 +66,24 @@ const InfoGeneral = ({ paciente }: { paciente: Paciente }) => {
               </p>
             </div>
           </div>
-          <button 
-            onClick={handleEdit}
-            className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 px-3 sm:px-4 py-2 rounded-lg bg-white border border-blue-200 hover:border-blue-300 text-xs sm:text-sm transition-colors shadow-sm hover:shadow-md w-full sm:w-auto"
-          >
-            <Edit size={14} />
-            <span className="sm:hidden">Editar</span>
-            <span className="hidden sm:inline">Editar información</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button 
+              onClick={() => navigate(`/pacientes/${paciente.id}/pdf`)}
+              className="flex items-center justify-center gap-2 text-green-600 hover:text-green-800 px-3 sm:px-4 py-2 rounded-lg bg-white border border-green-200 hover:border-green-300 text-xs sm:text-sm transition-colors shadow-sm hover:shadow-md w-full sm:w-auto"
+            >
+              <FileDown size={14} />
+              <span className="sm:hidden">PDF</span>
+              <span className="hidden sm:inline">Generar PDF</span>
+            </button>
+            <button 
+              onClick={handleEdit}
+              className="flex items-center justify-center gap-2 text-blue-600 hover:text-blue-800 px-3 sm:px-4 py-2 rounded-lg bg-white border border-blue-200 hover:border-blue-300 text-xs sm:text-sm transition-colors shadow-sm hover:shadow-md w-full sm:w-auto"
+            >
+              <Edit size={14} />
+              <span className="sm:hidden">Editar</span>
+              <span className="hidden sm:inline">Editar información</span>
+            </button>
+          </div>
         </div>
       </div>
 

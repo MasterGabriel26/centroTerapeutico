@@ -1,5 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
-import { Plus, User, Phone, Mail, UserCog, Edit, Trash2 } from "lucide-react";
+import { Plus, User, Phone, Mail, UserCog, Edit, Trash2, FileDown } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import AgregarFamiliarForm from "../AgregarFamiliarForm";
@@ -7,6 +8,7 @@ import { useFamiliares } from "../../hooks/useFamiliares";
 import { Familiar } from "../../types/familiar";
 
 const FamiliaresTab = ({ pacienteId }: { pacienteId: string }) => {
+  const navigate = useNavigate();
   const [openModal, setOpenModal] = useState(false);
   const [selectedFamiliar, setSelectedFamiliar] = useState<Familiar | null>(null);
   const { familiares, crearFamiliar, cargarFamiliares } = useFamiliares(pacienteId);
@@ -53,17 +55,26 @@ const FamiliaresTab = ({ pacienteId }: { pacienteId: string }) => {
         </div>
         
         <Button
-          variant="primary"
-          icon={<Plus size={14} />}
-          onClick={() => {
-            setSelectedFamiliar(null);
-            setOpenModal(true);
-          }}
-          size="sm"
-          className="shadow-sm"
-        >
-          Agregar
-        </Button>
+            variant="secondary"
+            icon={<FileDown size={14} />}
+            onClick={() => navigate(`/pacientes/${pacienteId}/familiares/pdf`)}
+            size="sm"
+            className="shadow-sm"
+          >
+            Generar PDF
+          </Button>
+          <Button
+            variant="primary"
+            icon={<Plus size={14} />}
+            onClick={() => {
+              setSelectedFamiliar(null);
+              setOpenModal(true);
+            }}
+            size="sm"
+            className="shadow-sm"
+          >
+            Agregar
+          </Button>
       </div>
 
       {/* Modal */}

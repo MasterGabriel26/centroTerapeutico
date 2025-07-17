@@ -1,5 +1,6 @@
+import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { Plus, Trash2, Pill, User, Loader2, Eye, ChevronDown, ChevronUp, Search, RefreshCw } from "lucide-react";
+import { Plus, Trash2, Pill, User, Loader2, Eye, ChevronDown, ChevronUp, Search, RefreshCw, FileDown } from "lucide-react";
 import { Button } from "../../../../components/ui/Button";
 import { Dialog } from "../../../../components/ui/Dialog";
 import { useRecetas } from "../../hooks/useRecetas";
@@ -10,6 +11,7 @@ import { getDoc, doc, increment, runTransaction, collection } from "firebase/fir
 import { db } from "../../../../utils/firebase";
 
 const RecetasTab = ({ pacienteId }: { pacienteId: string }) => {
+  const navigate = useNavigate();
   const { usuario: doctor } = useAuthStore();
   
   const { 
@@ -325,6 +327,15 @@ const handleSubmit = useCallback(async () => {
         </div>
         
         <div className="flex items-center gap-4">
+          <Button
+            variant="secondary"
+            icon={<FileDown size={16} />}
+            onClick={() => navigate(`/pacientes/${pacienteId}/recetas/pdf`)}
+            className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+          >
+            <span className="hidden sm:inline">Generar PDF</span>
+            <span className="sm:hidden">PDF</span>
+          </Button>
           <div className="bg-blue-50 px-3 py-2 rounded-lg border border-blue-100">
             <p className="text-xs text-blue-600">Total gastado</p>
             <p className="font-medium text-blue-800">

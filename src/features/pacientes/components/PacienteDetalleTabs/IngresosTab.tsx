@@ -1,7 +1,8 @@
+import { useNavigate } from "react-router-dom";
 import React, { useEffect, useState } from "react";
 import { useIngresos } from "../../hooks/useIngresos";
 import { Paciente } from "../../types/paciente";
-import { Calendar, ClipboardList, Edit, PlusCircle } from "lucide-react";
+import { Calendar, ClipboardList, Edit, PlusCircle, FileDown } from "lucide-react";
 import { PacienteIngreso } from "../../types/pacienteIngreso";
 import EditarSalidaModal from "../../components/EditarSalidaModal";
 import RegistrarReingresoModal from "../RegistrarReingresoModal";
@@ -12,6 +13,7 @@ interface Props {
 }
 
 const IngresosTab: React.FC<Props> = ({ paciente, onReingreso }) => {
+  const navigate = useNavigate();
   const { ingresos, loading, cargarIngresos } = useIngresos();
   const [ingresoSeleccionado, setIngresoSeleccionado] = useState<PacienteIngreso | null>(null);
   const [mostrarModalReingreso, setMostrarModalReingreso] = useState(false);
@@ -46,15 +48,24 @@ const IngresosTab: React.FC<Props> = ({ paciente, onReingreso }) => {
           <h2 className="text-base font-semibold">Historial de Internamientos</h2>
         </div>
 
-        {!pacienteEstaIngresado && (
+        <div className="flex items-center gap-2">
           <button
-            className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium"
-            onClick={() => setMostrarModalReingreso(true)}
+            className="flex items-center gap-2 px-4 py-2 bg-green-100 text-green-700 rounded hover:bg-green-200 text-sm font-medium"
+            onClick={() => navigate(`/pacientes/${paciente.id}/ingresos/pdf`)}
           >
-            <PlusCircle size={16} />
-            Registrar nuevo ingreso
+            <FileDown size={16} />
+            Generar PDF
           </button>
-        )}
+          {!pacienteEstaIngresado && (
+            <button
+              className="flex items-center gap-2 px-4 py-2 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 text-sm font-medium"
+              onClick={() => setMostrarModalReingreso(true)}
+            >
+              <PlusCircle size={16} />
+              Registrar nuevo ingreso
+            </button>
+          )}
+        </div>
       </div>
 
       {loading ? (

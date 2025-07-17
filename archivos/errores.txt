@@ -1,20 +1,35 @@
-chunk-WRD5HZVH.js?v=24f1c290:16670 Uncaught TypeError: onUpdateRespuestas is not a function
-    at RealizarTest.tsx:24:5
-chunk-WRD5HZVH.js?v=24f1c290:16670 Uncaught TypeError: onUpdateRespuestas is not a function
-    at RealizarTest.tsx:24:5
-2
-chunk-WRD5HZVH.js?v=24f1c290:14032 The above error occurred in the <RealizarTest> component:
+Revisando tu código, encuentro varios problemas que pueden causar errores o comportamientos inesperados:
 
-    at RealizarTest (https://1e5bf4b04089.ngrok-free.app/src/features/tests_psicologicos/components/RealizarTest.tsx?t=1752092310130:20:25)
-    at div
-    at PublicTestPage (https://1e5bf4b04089.ngrok-free.app/src/pages/PublicTestPage.tsx?t=1752092310130:25:22)
-    at RenderedRoute (https://1e5bf4b04089.ngrok-free.app/node_modules/.vite/deps/react-router-dom.js?v=24f1c290:4088:5)
-    at Routes (https://1e5bf4b04089.ngrok-free.app/node_modules/.vite/deps/react-router-dom.js?v=24f1c290:4558:5)
-    at App (https://1e5bf4b04089.ngrok-free.app/src/App.tsx?t=1752092342242:40:48)
-    at Router (https://1e5bf4b04089.ngrok-free.app/node_modules/.vite/deps/react-router-dom.js?v=24f1c290:4501:15)
-    at BrowserRouter (https://1e5bf4b04089.ngrok-free.app/node_modules/.vite/deps/react-router-dom.js?v=24f1c290:5247:5)
+Problemas identificados:
+1. Configuración duplicada de márgenes en html2pdf
+javascript
+const opt = {
+  margin: [15, 10, 15, 10], // ❌ Margen aquí
+  jsPDF: { 
+    unit: 'mm', 
+    format: 'a4', 
+    orientation: 'portrait',
+    margin: [15, 10, 15, 15] // ❌ Y también aquí (duplicado)
+  },
+};
+2. Manejo inconsistente de fechas
+javascript
+const formatDate = (date?: Date) => {
+  if (!date) return 'Fecha no disponible';
+  return new Date(date).toLocaleDateString('es-ES', { // ❌ new Date() sobre un Date
+    // ...
+  });
+};
+3. Dependencia faltante en useEffect
+javascript
+useEffect(() => {
+  // ...
+  if (recetas.length > 0) {
+    loadDoctorInfo();
+  }
+}, [recetas]); // ❌ Falta doctoresInfo en las dependencias
+4. Falta de manejo de casos vacíos
+No hay verificación si recetas está vacío o si hay errores al cargar.
 
-Consider adding an error boundary to your tree to customize error handling behavior.
-Visit https://reactjs.org/link/error-boundaries to learn more about error boundaries.
-chunk-WRD5HZVH.js?v=24f1c290:9129 Uncaught TypeError: onUpdateRespuestas is not a function
-    at RealizarTest.tsx:24:5
+5. Estructura de contenedor inconsistente
+Mezclas unidades CSS (794px) con unidades de impresión (297mm).

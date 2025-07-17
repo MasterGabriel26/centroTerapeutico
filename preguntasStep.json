@@ -1,0 +1,350 @@
+[
+  {
+    "section": "Situación Socio-Familiar",
+    "questions": [
+      {
+        "number": 23,
+        "question": "¿Quiénes integran su familia?",
+        "answer": "Mamá, hermano, tío."
+      },
+      {
+        "number": 24,
+        "question": "Genograma:",
+        "details": [
+          {"item": "Papa", "description": "No hay convivencia, desde su nacimiento. Operario."},
+          {"item": "Mamá", "description": "Hogar, secundaria. (2/7. Distante, 1 finado, tuvo en la cabeza.)"}
+        ]
+      },
+      {
+        "number": 25,
+        "question": "¿Cómo es la relación familiar?",
+        "sub_questions": [
+          {"number": 1, "question": "¿Saben tus padres dónde estás y lo que estás haciendo?", "answer": "1 (Sí)"},
+          {"number": 2, "question": "¿Saben tus padres o sustitutos cómo te sientes y piensas o sientes?", "answer": "1 (Sí)"},
+          {"number": 3, "question": "¿Discutes frecuentemente con tus padres, levantando la voz?", "answer": "1 (Sí)"},
+          {"number": 4, "question": "¿Están de acuerdo en cuanto a la forma en la que te deben dirigir?", "answer": "1 (Sí)"}
+        ]
+      },
+      {
+        "number": 26,
+        "question": "¿Cómo es la relación familiar?",
+        "answer": "Bien"
+      },
+      {
+        "number": 28,
+        "question": "En los últimos 12 meses, ¿ha tenido algún conflicto familiar grave?",
+        "answer": "Sí, ¿Cuál? Activo conflicto por enojo."
+      },
+      {
+        "number": 29,
+        "question": "¿Te has involucrado en una situación de abuso físico o sexual a consecuencia de haber consumido drogas?",
+        "answer": "Sí, físico."
+      }
+    ]
+  },
+  {
+    "section": "Normas familiares con relación al consumo de drogas",
+    "questions": [
+      {
+        "number": 1,
+        "question": "¿Tus padres saben que tomas alcohol o consumes drogas?",
+        "answer": "Sí"
+      },
+      {
+        "number": 2,
+        "question": "¿Te han puesto las reglas claras sobre el consumo de drogas?",
+        "answer": "Sí"
+      },
+      {
+        "number": 3,
+        "question": "¿Es importante para ti cumplir las normas?",
+        "answer": "Sí"
+      }
+    ]
+  },
+  {
+    "section": "Tiempo libre",
+    "questions": [
+      {
+        "number": 30,
+        "question": "¿Cuánto tiempo le dedica a consumir sustancias y qué actividades ha dejado de hacer por consumir?",
+        "answer": "Toda la noche."
+      },
+      {
+        "number": 31,
+        "question": "¿Qué actividades de diversión o entretenimiento que usted realiza están relacionadas al consumo de drogas?",
+        "answer": "Nada."
+      }
+    ]
+  },
+  {
+    "section": "Situación laboral",
+    "questions": [
+      {
+        "number": 32,
+        "question": "En los últimos 12 meses, ¿cuántos días no trabajó como resultado del consumo de drogas?",
+        "answer": "299"
+      },
+      {
+        "number": 33,
+        "question": "En los últimos 12 meses, ¿cuántas veces perdió el empleo como resultado del consumo de drogas?",
+        "answer": "20"
+      }
+    ]
+  },
+  {
+    "section": "Salud mental y física",
+    "questions": [
+      {
+        "number": 34,
+        "question": "Durante el último mes ¿ha pensado que estaría mejor muerto?",
+        "answer": "Sí"
+      },
+      {
+        "number": 35,
+        "question": "En caso afirmativo, ¿ha intentado suicidarse?",
+        "answer": "No"
+      },
+      {
+        "number": 36,
+        "question": "¿Alguna vez en la vida ha intentado suicidarse?",
+        "answer": "Sí"
+      },
+      {
+        "number": 37,
+        "question": "¿Presenta alguna enfermedad o padecimiento físico y/o mental?",
+        "answer": "Sí"
+      },
+      {
+        "number": 38,
+        "question": "¿Está enfermedad fue derivada del consumo de sustancias?",
+        "answer": "No"
+      },
+      {
+        "number": 39,
+        "question": "¿Está siendo atendido por algún problema de salud?",
+        "answer": "Sí, ¿Cuál? Psicólogo."
+      },
+      {
+        "number": 40,
+        "question": "¿Está tomando algún medicamento?",
+        "answer": "Sí, ¿Cuál? Ninguno."
+      },
+      {
+        "number": 41,
+        "question": "En los últimos 12 meses, ¿ha estado internado en un hospital?",
+        "answer": "Sí"
+      },
+      {
+        "number": 42,
+        "question": "En caso afirmativo, ¿ha sido por problemas relacionados por el consumo de drogas?",
+        "answer": "Sí"
+      }
+    ]
+  },
+  {
+    "section": "Consumo de sustancias",
+    "questions": [
+      {
+        "number": 1,
+        "question": "Consumo durante el último año:",
+        "table": {
+          "headers": [
+            "Tipo de Sustancia",
+            "Consumo total (SSI)",
+            "Forma de consumo",
+            "Frecuencia de días de consumo semanal",
+            "Cantidad consumida con más frecuencia por ocasión",
+            "Edad de inicio de consumo"
+          ],
+          "rows": [
+            {"Tipo de Sustancia": "Alcohol", "Consumo total (SSI)": "No", "Forma de consumo": "Tomar remedio", "Frecuencia de días de consumo semanal": "12", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": ""},
+            {"Tipo de Sustancia": "Marihuana", "Consumo total (SSI)": "No", "Forma de consumo": "Tomar remedio", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": "14"},
+            {"Tipo de Sustancia": "Cocaína", "Consumo total (SSI)": "No", "Forma de consumo": "", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": ""},
+            {"Tipo de Sustancia": "Metanfetaminas", "Consumo total (SSI)": "Sí", "Forma de consumo": "N/A", "Frecuencia de días de consumo semanal": "Diario", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": "13"},
+            {"Tipo de Sustancia": "Inhalantes", "Consumo total (SSI)": "Sí", "Forma de consumo": "Resina, pintura, cloro", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": "13"},
+            {"Tipo de Sustancia": "Drogas de diseño", "Consumo total (SSI)": "Sí", "Forma de consumo": "", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": "15"},
+            {"Tipo de Sustancia": "Med. Estimulantes", "Consumo total (SSI)": "Sí", "Forma de consumo": "", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": ""},
+            {"Tipo de Sustancia": "Med. Depresores", "Consumo total (SSI)": "Sí", "Forma de consumo": "", "Frecuencia de días de consumo semanal": "Diario", "Cantidad consumida con más frecuencia por ocasión": "10", "Edad de inicio de consumo": "17"},
+            {"Tipo de Sustancia": "Tabaco", "Consumo total (SSI)": "Sí", "Forma de consumo": "", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": ""},
+            {"Tipo de Sustancia": "Otras", "Consumo total (SSI)": "", "Forma de consumo": "", "Frecuencia de días de consumo semanal": "", "Cantidad consumida con más frecuencia por ocasión": "", "Edad de inicio de consumo": ""}
+          ]
+        }
+      },
+      {
+        "number": 2,
+        "question": "Principal sustancia de consumo (marque sólo una):",
+        "answer": "(7) Metanfetaminas, Inhalantes."
+      },
+      {
+        "number": 3,
+        "question": "En caso de consumo de alcohol, ¿qué tipo de bebida consume?",
+        "answer": ""
+      },
+      {
+        "number": 4,
+        "question": "¿Qué hace cuánto consume en forma drogas en forma excesiva?",
+        "answer": ""
+      },
+      {
+        "number": 5,
+        "question": "Normalmente consume:",
+        "answer": "(1) solo"
+      },
+      {
+        "number": 6,
+        "question": "El lugar donde consume normalmente es:",
+        "answer": "(1) Público"
+      },
+      {
+        "number": 7,
+        "question": "¿En qué lugares consume con más frecuencia?",
+        "answer": "En mi cuarto."
+      },
+      {
+        "number": 8,
+        "question": "¿Cuando empieza a consumir drogas ¿puede detener su consumo?",
+        "answer": "Sí."
+      },
+      {
+        "number": 10,
+        "question": "De las situaciones de la vida diaria ¿cuáles son las que más lo llevan a consumir?",
+        "answer": "Por placer."
+      }
+    ]
+  },
+  {
+    "section": "Sentimientos de Soledad",
+    "questions": [
+      {
+        "number": 11,
+        "question": "De acuerdo con la siguiente escala, señale la opción que mejor describa su consumo de alcohol/drogas durante los últimos 12 meses (marque sólo una opción):",
+        "table": {
+          "headers": ["", "Alcohol", "Drogas"],
+          "rows": [
+            {"": "1. Sin problema", "Alcohol": "", "Drogas": ""},
+            {"": "2. Un pequeño problema", "Alcohol": "", "Drogas": ""},
+            {"": "3. Un problema", "Alcohol": "", "Drogas": "✔"},
+            {"": "4. Un gran problema", "Alcohol": "", "Drogas": ""}
+          ]
+        }
+      }
+    ]
+  },
+  {
+    "section": "Disposición al cambio",
+    "questions": [
+      {
+        "number": 12,
+        "question": "¿Cuánto es el mayor tiempo que se ha propuesto y ha logrado no consumir drogas? (Si nunca se ha abstenido, marque “0”)",
+        "answer": "6 meses."
+      },
+      {
+        "number": 13,
+        "question": "¿Cuándo ocurrió? mes y año",
+        "answer": "2023-2024."
+      },
+      {
+        "number": 14,
+        "question": "¿Por qué se abstuvo en esa ocasión?",
+        "answer": "Trabajo, ocupado."
+      },
+      {
+        "number": 18,
+        "question": "Actualmente ¿Qué tan importante es para usted dejar de consumir drogas?",
+        "answer": "(5) Muy importante"
+      },
+      {
+        "number": 19,
+        "question": "En una escala del 1 al 10, ¿qué tan seguro se siente de no consumir drogas?",
+        "answer": "8"
+      },
+      {
+        "number": 20,
+        "question": "En estos momentos, usted piensa que:",
+        "answer": "(4) Ya está haciendo algo para dejar de consumir."
+      },
+      {
+        "number": 21,
+        "question": "¿Qué tan dispuesto está para recibir o concluir el servicio de internamiento?",
+        "answer": "(5) Muy dispuesto"
+      },
+      {
+        "number": 22,
+        "question": "Mencione 3 principales razones por las cuales es importante dejar de consumir:",
+        "answer": "1. Estar bien con mi familia.\n2. Ya no ser el centro de conversación de los demás.\n3. Prioridad: conseguir un trabajo."
+      }
+    ]
+  },
+  {
+    "section": "Tratamiento",
+    "questions": [
+      {
+        "number": 43,
+        "question": "¿Ha recibido algún tipo de tratamiento o ayuda para resolver sus problemas de alcohol/drogas?",
+        "answer": "Sí. 5. Actualmente. (1) Divina Providencia, 3 meses. (2) Nueva vida, 1 año. (3) 8 meses. (4) Celestial, 8 meses. (5) Actualmente."
+      },
+      {
+        "number": 44,
+        "question": "¿Cuáles y cuántos tratamientos ha recibido?",
+        "table": {
+          "headers": ["Tipo de Tratamiento", "Alcohol", "Drogas", "Hace cuánto tiempo", "¿Lo concluiste?", "En caso negativo ¿Cuáles fueron las razones?"],
+          "rows": [
+            {"Tipo de Tratamiento": "Centro de desintoxicación", "Alcohol": "", "Drogas": "•", "Hace cuánto tiempo": "1 año", "¿Lo concluiste?": "No", "En caso negativo ¿Cuáles fueron las razones?": ""},
+            {"Tipo de Tratamiento": "Tratamiento de consulta externa", "Alcohol": "", "Drogas": "", "Hace cuánto tiempo": "", "¿Lo concluiste?": "", "En caso negativo ¿Cuáles fueron las razones?": ""},
+            {"Tipo de Tratamiento": "Tratamiento de internamiento", "Alcohol": "", "Drogas": "", "Hace cuánto tiempo": "", "¿Lo concluiste?": "", "En caso negativo ¿Cuáles fueron las razones?": ""},
+            {"Tipo de Tratamiento": "Tratamiento médico", "Alcohol": "", "Drogas": "", "Hace cuánto tiempo": "", "¿Lo concluiste?": "", "En caso negativo ¿Cuáles fueron las razones?": ""},
+            {"Tipo de Tratamiento": "Tratamiento psiquiátrico", "Alcohol": "", "Drogas": "", "Hace cuánto tiempo": "", "¿Lo concluiste?": "", "En caso negativo ¿Cuáles fueron las razones?": ""},
+            {"Tipo de Tratamiento": "Tratamiento psicológico", "Alcohol": "", "Drogas": "", "Hace cuánto tiempo": "", "¿Lo concluiste?": "", "En caso negativo ¿Cuáles fueron las razones?": ""}
+          ]
+        }
+      },
+      {
+        "number": 45,
+        "question": "¿Qué tan satisfecho se encuentra con su forma o estilo de vida en este momento?",
+        "answer": "Insatisfecho."
+      },
+      {
+        "number": 46,
+        "question": "¿Cuáles son sus metas para el futuro?",
+        "areas": [
+          {"number": 1, "area": "Consumo de drogas", "goal": "Salir adelante"},
+          {"number": 2, "area": "Salud física", "goal": "Estar sobrio"},
+          {"number": 3, "area": "Trabajo y escuela", "goal": "Poder empeño"},
+          {"number": 4, "area": "Manejo del dinero", "goal": ""},
+          {"number": 5, "area": "Relaciones de pareja", "goal": ""},
+          {"number": 6, "area": "Situación legal", "goal": ""},
+          {"number": 7, "area": "Vida Emocional", "goal": ""},
+          {"number": 8, "area": "Comunicación", "goal": ""},
+          {"number": 9, "area": "Social/Recreativas", "goal": ""},
+          {"number": 10, "area": "General", "goal": ""}
+        ]
+      }
+    ]
+  },
+  {
+    "section": "Observaciones de la sesión",
+    "questions": [
+      {
+        "number": 47,
+        "question": "Problemas presentados durante la sesión:",
+        "answer": "No logra captar su atención, dificultad para concentrarse."
+      },
+      {
+        "number": 48,
+        "question": "Observaciones:",
+        "answer": "Usuario multiincidente en proceso de desintoxicación y rehabilitación, procesos largos, nula conciencia de enfermedad, no hay contacto emocional, no logra gestionar emociones, no le importa cumplir las reglas. No hay deseo de cambio, ansiedad, incomodidad, sx de psicosis marcada, alucinaciones (escucha voces actualmente). Deserción escolar, 5to primaria."
+      },
+      {
+        "question_type": "info",
+        "question": "Nombre de quien aplicó la entrevista:",
+        "answer": "Karely J."
+      },
+      {
+        "question_type": "info",
+        "question": "Cargo:",
+        "answer": "Psicóloga."
+      }
+    ]
+  }
+]

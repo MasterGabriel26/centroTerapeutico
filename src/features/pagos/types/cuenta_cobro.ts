@@ -3,6 +3,7 @@ export interface CuentaCobro {
   paciente_id: string;
   fecha: string; // fecha de creación o emisión
   monto: number;
+  total?: number; // Añadir la propiedad total
   metodo_pago?: string;
    estado:
     | "generado"

@@ -9,7 +9,11 @@ export const getAuditoriasCuentaCobro = async (
   pacienteId: string,
   cuentaCobroId: string
 ): Promise<AuditoriaCuentaCobro[]> => {
-  const auditoriaRef = collection(db, "auditoria_cuentas_cobro", cuentaCobroId, "cambios"); // ✅ FIX aquí
+  if (!cuentaCobroId) {
+    console.warn("cuentaCobroId is undefined or empty. Cannot fetch audit data.");
+    return [];
+  }
+  const auditoriaRef = collection(db, "auditoria_cuentas_cobro", cuentaCobroId, "cambios");
   const q = query(auditoriaRef, orderBy("fecha", "asc"));
   const snapshot = await getDocs(q);
 

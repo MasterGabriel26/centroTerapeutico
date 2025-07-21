@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { addFamiliar, getFamiliares } from '../services/familiarService';
 import { Familiar } from '../types/familiar';
 
@@ -6,17 +6,17 @@ export const useFamiliares = (pacienteId: string) => {
   const [familiares, setFamiliares] = useState<Familiar[]>([]);
   const [loading, setLoading] = useState(false);
 
-  const cargarFamiliares = async () => {
+  const cargarFamiliares = useCallback(async () => {
     setLoading(true);
     const lista = await getFamiliares(pacienteId);
     setFamiliares(lista);
     setLoading(false);
-  };
+  }, [pacienteId]);
 
-  const crearFamiliar = async (data: Familiar) => {
+  const crearFamiliar = useCallback(async (data: Familiar) => {
     await addFamiliar(pacienteId, data);
     await cargarFamiliares();
-  };
+  }, [pacienteId, cargarFamiliares]);
 
   return {
     familiares,

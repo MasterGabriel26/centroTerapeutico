@@ -1,5 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import { useState, useEffect, useMemo } from "react";
+import React from 'react';
 import { 
   Plus, 
   Trash2, 
@@ -40,7 +41,7 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
   } = useVisitas(pacienteId);
   
   const [openModal, setOpenModal] = useState(false);
-  const [visitantes, setVisitantes] = useState<{nombre: string, parentesco: string, telefono: string}[]>([]);
+  const [visitantes, setVisitantes] = useState<({id: string} & {nombre: string, parentesco: string, telefono: string})[]>([]);
   const [currentVisitante, setCurrentVisitante] = useState({
     nombre: "", 
     parentesco: "",
@@ -132,7 +133,7 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
       return;
     }
     
-    setVisitantes([...visitantes, currentVisitante]);
+    setVisitantes([...visitantes, { ...currentVisitante, id: Date.now().toString() }]);
     setCurrentVisitante({nombre: "", parentesco: "", telefono: ""});
     setFormError(null);
   };
@@ -334,8 +335,8 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
               <div className="mb-4 space-y-2 sm:space-y-0">
                 {/* Vista móvil - Cards */}
                 <div className="block sm:hidden space-y-2">
-                  {visitantes.map((visitante, index) => (
-                    <div key={index} className="bg-white border border-gray-200 rounded-lg p-3">
+                  {visitantes.map((visitante) => (
+                    <div key={visitante.id || `${visitante.nombre}-${visitante.parentesco}-${visitante.telefono}`} className="bg-white border border-gray-200 rounded-lg p-3">
                       <div className="flex justify-between items-start">
                         <div className="flex-1">
                           <p className="font-medium text-sm">{visitante.nombre}</p>
@@ -347,7 +348,7 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
                         <button
                           type="button"
                           className="text-red-500 hover:text-red-700 p-1"
-                          onClick={() => handleRemoveVisitante(index)}
+                          onClick={() => handleRemoveVisitante(visitantes.indexOf(visitante))}
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
@@ -368,8 +369,8 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
                       </tr>
                     </thead>
                     <tbody>
-                      {visitantes.map((visitante, index) => (
-                        <tr key={index} className="border-t hover:bg-gray-50">
+                      {visitantes.map((visitante) => (
+                        <tr key={visitante.id || `${visitante.nombre}-${visitante.parentesco}-${visitante.telefono}`} className="border-t hover:bg-gray-50">
                           <td className="py-2 px-3">{visitante.nombre}</td>
                           <td className="py-2 px-3">{visitante.parentesco}</td>
                           <td className="py-2 px-3">{visitante.telefono || '-'}</td>
@@ -377,7 +378,7 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
                             <button
                               type="button"
                                                             className="text-red-500 hover:text-red-700"
-                              onClick={() => handleRemoveVisitante(index)}
+                              onClick={() => handleRemoveVisitante(visitantes.indexOf(visitante))}
                             >
                               <Trash2 size={16} />
                             </button>
@@ -555,8 +556,8 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
                     <div className="mb-3">
                       <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Visitantes</p>
                       <div className="space-y-1">
-                        {visita.visitantes.slice(0, 2).map((visitante, index) => (
-                          <div key={index} className="flex items-center gap-2">
+                        {visita.visitantes.slice(0, 2).map((visitante) => (
+                          <div key={visitante.id || `${visita.id}-${visitante.nombre}-${visitante.parentesco}`} className="flex items-center gap-2">
                             <User className="w-3 h-3 text-gray-400" />
                             <span className="text-sm text-gray-900">{visitante.nombre}</span>
                             <span className="text-xs text-gray-500">({visitante.parentesco})</span>
@@ -633,7 +634,7 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
                         : visitantesTexto;
                         
                       return (
-                        <>
+                      <React.Fragment key={visita.id}>
                           <tr 
                             key={visita.id} 
                             className="hover:bg-gray-50 cursor-pointer transition-colors" 
@@ -739,7 +740,7 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
                               </td>
                             </tr>
                           )}
-                        </>
+                        </React.Fragment>
                       );
                     })}
                   </tbody>
@@ -773,8 +774,8 @@ const VisitasTab = ({ pacienteId }: { pacienteId: string }) => {
             <div>
               <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-3">Visitantes</h3>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {detalleVisita.visitantes.map((visitante, index) => (
-                  <div key={index} className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-200">
+                {detalleVisita.visitantes.map((visitante) => (
+                  <div key={visitante.id || `${visitante.nombre}-${visitante.parentesco}-${visitante.telefono}`} className="bg-gray-50 p-3 sm:p-4 rounded-lg border border-gray-200">
                     <div className="flex items-start gap-2">
                       <User className="w-4 
                                             h-4 text-gray-400 mt-0.5 flex-shrink-0" />

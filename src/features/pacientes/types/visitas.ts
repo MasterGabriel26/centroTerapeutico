@@ -8,6 +8,7 @@ export interface Visita {
 }
 
 export interface Visitante {
+    id?: string;
     nombre: string;
     parentesco: string; 
     telefono: string;

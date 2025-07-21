@@ -38,6 +38,7 @@ import NovedadesPdfPage from './features/pacientes/pages/NovedadesPdfPage';
 import RecetasPdfPage from './features/pacientes/pages/RecetasPdfPage';
 import SeguimientosPdfPage from './features/pacientes/pages/SeguimientosPdfPage';
 import VisitasPdfPage from './features/pacientes/pages/VisitasPdfPage';
+import SuperPdfPage from './features/pacientes/pages/SuperPdfPage';
 
 const App: React.FC = () => {
   const { usuario, isLoading, checkSession } = useAuthStore();
@@ -123,6 +124,7 @@ const App: React.FC = () => {
         <Route path="/pacientes/:pacienteId/recetas/pdf" element={<RecetasPdfPage />} />
         <Route path="/pacientes/:pacienteId/seguimientos/pdf" element={<SeguimientosPdfPage />} />
         <Route path="/pacientes/:pacienteId/visitas/pdf" element={<VisitasPdfPage />} />
+        <Route path="/pacientes/:id/super-pdf" element={<SuperPdfPage />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
 
       </Route>

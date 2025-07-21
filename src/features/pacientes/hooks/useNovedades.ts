@@ -31,7 +31,7 @@ export const useNovedades = (pacienteId: string) => {
     }
   }, [pacienteId]);
 
-  const crearNovedad = async (data: Omit<Novedad, 'id' | 'fecha' | 'isActive'>) => {
+  const crearNovedad = useCallback(async (data: Omit<Novedad, 'id' | 'fecha' | 'isActive'>) => {
     try {
       setLoading(true);
       setError(null);
@@ -47,7 +47,7 @@ export const useNovedades = (pacienteId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pacienteId, cargarNovedades]);
 
   return {
     novedades,

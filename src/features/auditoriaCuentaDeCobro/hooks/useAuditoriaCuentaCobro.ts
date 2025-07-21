@@ -16,16 +16,27 @@ export function useAuditoriaCuentaCobro(pacienteId: string, cuentaCobroId: strin
   const [loading, setLoading] = useState(false);
 
   const fetchData = useCallback(async () => {
+    if (!pacienteId || !cuentaCobroId) {
+      setAuditorias([]);
+      setLoading(false);
+      return;
+    }
     setLoading(true);
-    const [auditoriasList, pacientesMap, usuariosMap] = await Promise.all([
-      getAuditoriasCuentaCobro(pacienteId, cuentaCobroId),
-      getPacientesMap(),
-      getUsuariosMap(),
-    ]);
-    setAuditorias(auditoriasList);
-    setPacientes(pacientesMap);
-    setUsuarios(usuariosMap);
-    setLoading(false);
+    try {
+      const [auditoriasList, pacientesMap, usuariosMap] = await Promise.all([
+        getAuditoriasCuentaCobro(pacienteId, cuentaCobroId),
+        getPacientesMap(),
+        getUsuariosMap(),
+      ]);
+      setAuditorias(auditoriasList);
+      setPacientes(pacientesMap);
+      setUsuarios(usuariosMap);
+    } catch (error) {
+      console.error("Error fetching audit data:", error);
+      setAuditorias([]);
+    } finally {
+      setLoading(false);
+    }
   }, [pacienteId, cuentaCobroId]);
 
   useEffect(() => {

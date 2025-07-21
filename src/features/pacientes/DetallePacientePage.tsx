@@ -22,7 +22,8 @@ import {
   Building2,
   FileText,
   Calendar,
-  ArrowLeft
+  ArrowLeft,
+  FileDown
 } from 'lucide-react';
 import { TabWithTooltip } from "./components/TabWithTooltip";
 import imagenEjemplo from "./ejemplo1.jpg"
@@ -179,6 +180,17 @@ const PacienteDetallePage: React.FC = () => {
                     <span>{paciente.telefono || "No especificado"}</span>
                   </div>
                 </div>
+              </div>
+
+              {/* Botón para generar PDF */}
+              <div className="ml-auto">
+                <Button
+                  onClick={() => navigate(`/pacientes/${id}/super-pdf`)}
+                  className="bg-green-600 hover:bg-green-700 text-white flex items-center gap-2"
+                >
+                  <FileDown size={20} />
+                  <span className="hidden sm:inline">Generar PDF</span>
+                </Button>
               </div>
             </div>
           </div>

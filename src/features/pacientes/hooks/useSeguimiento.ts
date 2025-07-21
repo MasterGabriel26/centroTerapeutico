@@ -1,5 +1,5 @@
 // features/pacientes/hooks/useSeguimientos.ts
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { 
   createSeguimiento, 
   getSeguimientos, 
@@ -12,7 +12,7 @@ export const useSeguimientos = (pacienteId: string) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchSeguimientos = async () => {
+  const fetchSeguimientos = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -23,9 +23,9 @@ export const useSeguimientos = (pacienteId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pacienteId]);
 
-  const agregarSeguimiento = async (seguimiento: Omit<Seguimiento, 'id'>) => {
+  const agregarSeguimiento = useCallback(async (seguimiento: Omit<Seguimiento, 'id'>) => {
     setLoading(true);
     setError(null);
     try {
@@ -41,10 +41,10 @@ export const useSeguimientos = (pacienteId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pacienteId, fetchSeguimientos]);
 
   // El resto del hook permanece igual
-  const toggleStatus = async (seguimientoId: string) => {
+  const toggleStatus = useCallback(async (seguimientoId: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -55,7 +55,7 @@ export const useSeguimientos = (pacienteId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pacienteId, fetchSeguimientos]);
 
   return {
     seguimientos,

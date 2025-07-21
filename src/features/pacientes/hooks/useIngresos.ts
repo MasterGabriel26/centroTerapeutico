@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import {
   agregarIngreso,
   obtenerIngresosPorPaciente,
@@ -11,7 +11,7 @@ export const useIngresos = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const cargarIngresos = async (pacienteId: string) => {
+  const cargarIngresos = useCallback(async (pacienteId: string) => {
     setLoading(true);
     setError(null);
     try {
@@ -23,9 +23,9 @@ export const useIngresos = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const crearIngreso = async (
+  const crearIngreso = useCallback(async (
     pacienteId: string,
     ingreso: Omit<PacienteIngreso, "id">
   ) => {
@@ -37,9 +37,9 @@ export const useIngresos = () => {
       setError("No se pudo registrar el ingreso.");
       return null;
     }
-  };
+  }, []);
 
-  const actualizarSalida = async (
+  const actualizarSalida = useCallback(async (
     pacienteId: string,
     ingresoId: string,
     data: { fecha_salida: string; motivo_salida: string }
@@ -50,7 +50,7 @@ export const useIngresos = () => {
       console.error("Error al actualizar salida:", err);
       setError("No se pudo registrar la salida.");
     }
-  };
+  }, []);
 
   return {
     ingresos,

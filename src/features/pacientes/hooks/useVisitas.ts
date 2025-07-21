@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { addVisita, getVisitas, getVisitasByDateRange } from '../services/visitaService';
 import { Visita } from '../types/visitas';
 
@@ -8,7 +8,7 @@ export const useVisitas = (pacienteId: string) => {
   const [error, setError] = useState<string | null>(null);
   const [filtroFecha, setFiltroFecha] = useState<{ inicio?: Date; fin?: Date }>({});
 
-  const cargarVisitas = async () => {
+  const cargarVisitas = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -20,16 +20,25 @@ export const useVisitas = (pacienteId: string) => {
         lista = await getVisitas(pacienteId);
       }
       
-      setVisitas(lista);
+      // Asegurar que cada visitante tenga un ID único
+      const visitasConIdsUnicos = lista.map(visita => ({
+        ...visita,
+        visitantes: visita.visitantes.map(visitante => ({
+          ...visitante,
+          id: visitante.id || Math.random().toString(36).substr(2, 9) // Generar ID si no existe
+        }))
+      }));
+      
+      setVisitas(visitasConIdsUnicos);
     } catch (err) {
       setError('Error al cargar visitas');
       console.error(err);
     } finally {
       setLoading(false);
     }
-  };
+  }, [pacienteId, filtroFecha]);
 
-  const crearVisita = async (data: Omit<Visita, 'id' | 'fecha'>) => {
+  const crearVisita = useCallback(async (data: Omit<Visita, 'id' | 'fecha'>) => {
     try {
       setLoading(true);
       setError(null);
@@ -41,11 +50,11 @@ export const useVisitas = (pacienteId: string) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [pacienteId, cargarVisitas]);
 
-  const aplicarFiltroFecha = (inicio?: Date, fin?: Date) => {
+  const aplicarFiltroFecha = useCallback((inicio?: Date, fin?: Date) => {
     setFiltroFecha({ inicio, fin });
-  };
+  }, []);
 
   useEffect(() => {
     if (pacienteId) {

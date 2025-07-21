@@ -106,6 +106,7 @@ export interface Paciente {
   estado: string;
   creado: string;
   voluntario: boolean;
+  fecha_ingreso: string;
   
   // Datos demográficos
   fecha_entrevista: string;
